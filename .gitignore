@@ -1,0 +1,7 @@
+main
+db/wsc-aldo.db
+
+# Include directories but not the files.
+log/*
+!log/.gitkeep 
+
