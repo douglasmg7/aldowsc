@@ -45,37 +45,37 @@ type aldoProducts struct {
 
 // Aldo product.
 type aldoProduct struct {
-	Codigo            string `xml:"codigo,attr"`
-	Marca             string `xml:"marca,attr"`
-	Categoria         string `xml:"categoria,attr"`
-	Descricao         string `xml:"descricao,attr"`
-	Unidade           string `xml:"unidade,attr"`
-	Multiplo          string `xml:"multiplo,attr"`
-	Preco             string `xml:"preco,attr"`
-	Precoeup          string `xml:"precoeup,attr"`
-	Peso              string `xml:"peso,attr"`
-	DescricaoTecnica  string `xml:"descricao_tecnica,attr"`
-	Disponivel        string `xml:"disponivel,attr"`
-	Ipi               string `xml:"ipi,attr"`
-	Dimensoes         string `xml:"dimensoes,attr"`
-	Abnt              string `xml:"abnt,attr"`
-	Ncm               string `xml:"ncm,attr"`
-	Origem            string `xml:"origem,attr"`
-	Ppb               string `xml:"ppb,attr"`
-	Portariappb       string `xml:"portariappb,attr"`
-	Mpdobem           string `xml:"mpdobem,attr"`
-	Dataportariappb   string `xml:"dataportariappb,attr"`
-	Icms              string `xml:"icms,attr"`
-	Reducao           string `xml:"reducao,attr"`
-	Precocomst        string `xml:"precocomst,attr"`
-	Produtocomst      string `xml:"produtocomst,attr"`
-	Foto              string `xml:"foto,attr"`
-	DescricaoAmigavel string `xml:"descricao_amigavel,attr"`
-	CategoriaTi       string `xml:"categoria_ti,attr"`
-	TempoGarantia     string `xml:"tempo_garantia,attr"`
-	ProcedimentosRma  string `xml:"procedimentos_rma,attr"`
-	EmpFilial         string `xml:"emp_filial,attr"`
-	Potencia          string `xml:"potencia,attr"`
+	Codigo    string `xml:"codigo,attr"`
+	Marca     string `xml:"marca,attr"`
+	Categoria string `xml:"categoria,attr"`
+	Descricao string `xml:"descricao,attr"`
+	// Unidade           string `xml:"unidade,attr"`
+	// Multiplo          string `xml:"multiplo,attr"`		*
+	Preco string `xml:"preco,attr"`
+	// Precoeup          string `xml:"precoeup,attr"`
+	Peso             string `xml:"peso,attr"`
+	DescricaoTecnica string `xml:"descricao_tecnica,attr"`
+	Disponivel       string `xml:"disponivel,attr"`
+	// Ipi               string `xml:"ipi,attr"`
+	Dimensoes string `xml:"dimensoes,attr"`
+	// Abnt              string `xml:"abnt,attr"`
+	// Ncm               string `xml:"ncm,attr"`
+	// Origem            string `xml:"origem,attr"`
+	// Ppb               string `xml:"ppb,attr"`
+	// Portariappb       string `xml:"portariappb,attr"`
+	// Mpdobem           string `xml:"mpdobem,attr"`
+	// Dataportariappb   string `xml:"dataportariappb,attr"`
+	// Icms              string `xml:"icms,attr"`
+	// Reducao           string `xml:"reducao,attr"`
+	// Precocomst        string `xml:"precocomst,attr"`
+	// Produtocomst      string `xml:"produtocomst,attr"`
+	Foto string `xml:"foto,attr"`
+	// DescricaoAmigavel string `xml:"descricao_amigavel,attr"`
+	// CategoriaTi       string `xml:"categoria_ti,attr"`
+	TempoGarantia    string `xml:"tempo_garantia,attr"`
+	ProcedimentosRma string `xml:"procedimentos_rma,attr"`
+	// EmpFilial         string `xml:"emp_filial,attr"`
+	// Potencia          string `xml:"potencia,attr"`
 }
 
 // Development mode.
