@@ -7,8 +7,11 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 
 	"golang.org/x/net/html/charset"
 )
@@ -38,26 +41,24 @@ type configuration struct {
 	} `json:"allNations"`
 }
 
-// Aldo products.
-type aldoProducts struct {
-	Produto []aldoProduct `xml:"produto"`
+type xmlDoc struct {
+	Products []xmlProduct `xml:"produto"`
 }
 
-// Aldo product.
-type aldoProduct struct {
-	Codigo    string `xml:"codigo,attr"`
-	Marca     string `xml:"marca,attr"`
-	Categoria string `xml:"categoria,attr"`
-	Descricao string `xml:"descricao,attr"`
+type xmlProduct struct {
+	Code        string `xml:"codigo,attr"`
+	Brand       string `xml:"marca,attr"`
+	Category    string `xml:"categoria,attr"`
+	Description string `xml:"descricao,attr"`
 	// Unidade           string `xml:"unidade,attr"`
-	// Multiplo          string `xml:"multiplo,attr"`		*
-	Preco string `xml:"preco,attr"`
+	Multiplo string `xml:"multiplo,attr"`
+	Price    string `xml:"preco,attr"`
 	// Precoeup          string `xml:"precoeup,attr"`
-	Peso             string `xml:"peso,attr"`
-	DescricaoTecnica string `xml:"descricao_tecnica,attr"`
-	Disponivel       string `xml:"disponivel,attr"`
+	Weight       string `xml:"peso,attr"`
+	TecDesc      string `xml:"descricao_tecnica,attr"`
+	Availability string `xml:"disponivel,attr"`
 	// Ipi               string `xml:"ipi,attr"`
-	Dimensoes string `xml:"dimensoes,attr"`
+	Measurements string `xml:"dimensoes,attr"`
 	// Abnt              string `xml:"abnt,attr"`
 	// Ncm               string `xml:"ncm,attr"`
 	// Origem            string `xml:"origem,attr"`
@@ -69,13 +70,36 @@ type aldoProduct struct {
 	// Reducao           string `xml:"reducao,attr"`
 	// Precocomst        string `xml:"precocomst,attr"`
 	// Produtocomst      string `xml:"produtocomst,attr"`
-	Foto string `xml:"foto,attr"`
+	PictureLinks string `xml:"foto,attr"`
 	// DescricaoAmigavel string `xml:"descricao_amigavel,attr"`
 	// CategoriaTi       string `xml:"categoria_ti,attr"`
-	TempoGarantia    string `xml:"tempo_garantia,attr"`
-	ProcedimentosRma string `xml:"procedimentos_rma,attr"`
+	WarrantyTime string `xml:"tempo_garantia,attr"`
+	RMAProcedure string `xml:"procedimentos_rma,attr"`
 	// EmpFilial         string `xml:"emp_filial,attr"`
 	// Potencia          string `xml:"potencia,attr"`
+}
+
+type aldoProduct struct {
+	Code                string
+	Brand               string
+	Category            string
+	Description         string
+	Multiple            string
+	Price               float32
+	Weight              int // Peso(gr).
+	TecnicalDescription string
+	Availability        bool
+	Dimension           dimension
+	PictureLinks        []string
+	WarrantyTime        string // Days.
+	RMAProcedure        string // ?
+
+}
+
+type dimension struct {
+	length int // Comprimento(mm).
+	width  int // Largura(mm).
+	height int // Altura(mm).
 }
 
 // Development mode.
@@ -125,18 +149,18 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	products := aldoProducts{}
+	aldoXMLDoc := xmlDoc{}
 	decoder := xml.NewDecoder(xmlFile)
 	decoder.CharsetReader = charset.NewReaderLabel
 	// decoder.CharsetReader = charset.NewReader
-	err = decoder.Decode(&products)
+	err = decoder.Decode(&aldoXMLDoc)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	// fmt.Println("products: ", products)
 	// fmt.Println("product-1: ", products.Produto[1])
-	fmt.Println("product-1-code: ", products.Produto[1].Codigo)
-	fmt.Println("product-1-empFilial: ", products.Produto[1].EmpFilial)
+	fmt.Println("Code: ", aldoXMLDoc.Products[1].Code)
+	fmt.Println("Description: ", aldoXMLDoc.Products[1].Description)
 	defer xmlFile.Close()
 
 	// var f interface{}
@@ -168,6 +192,8 @@ func main() {
 	// fmt.Println(f)
 
 	// log.Println("aldo products: ", aldoProds)
+	products := aldoXMLDoc.process()
+
 }
 
 func init() {
@@ -204,6 +230,59 @@ func init() {
 	// fmt.Println("User: ", config.WsAldo.User)
 	// fmt.Println("Password: ", config.WsAldo.Password)
 
+}
+
+/**************************************************************************************************
+* Statistics.
+**************************************************************************************************/
+
+func (doc *xmlDoc) process() (products []aldoProduct) {
+	// Price.
+	var minPrice float32
+	minPrice = math.MaxFloat32
+	var maxPrice float32
+	var priceSum float32
+	var averagePrice float32
+	var brand map[string]int
+	var category map[string]int
+	var available int
+	for _, xmlProduct := range doc.Products {
+		var product aldoProduct
+		product.Brand = xmlProduct.Brand
+		//Price.
+		pirce, err := convertStrBrDecimalToFloat32(xmlProduct.Price)
+		if err != nil {
+			log.Println("Could not convert price, product code: %s, price: %s", xmlProduct.Code, xmlProduct.Price)
+			continue
+		}
+		product.Price = pirce
+		// Max price.
+		if product.Price > maxPrice {
+			maxPrice = product.Price
+		}
+		// Min price.
+		if product.Price < minPrice {
+			minPrice = product.Price
+		}
+		products = append(products, product)
+		// Pric sum.
+		priceSum += product.Price
+	}
+	averagePrice := priceSum / len(products)
+	return products
+}
+
+/**************************************************************************************************
+* Util.
+**************************************************************************************************/
+func convertStrBrDecimalToFloat32(str string) (val float32, err error) {
+	str = strings.Replace(str, ".", "", -1)
+	str = strings.Replace(str, ",", ".", 0)
+	val64, err := strconv.ParseFloat(str, 32)
+	if err != nil {
+		return float32(val64), nil
+	}
+	return 0, err
 }
 
 /**************************************************************************************************
