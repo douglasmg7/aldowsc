@@ -5,10 +5,8 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"math"
-	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -120,7 +118,7 @@ func main() {
 	// url := fmt.Sprintf(`http://webservice.aldo.com.br/asp.net/ferramentas/saldoproduto.ashx?u=%s&p=%s&codigo=%s&qtde=%s&emp_filial=%s`, config.WsAldo.User, config.WsAldo.Password, "20764-8", "1", "1")
 
 	// All products.
-	url := fmt.Sprintf(`http://webservice.aldo.com.br/asp.net/ferramentas/integracao.ashx?u=%s&p=%s`, config.WsAldo.User, config.WsAldo.Password)
+	// url := fmt.Sprintf(`http://webservice.aldo.com.br/asp.net/ferramentas/integracao.ashx?u=%s&p=%s`, config.WsAldo.User, config.WsAldo.Password)
 
 	// Allnations
 	// url := fmt.Sprintf(`http://wspub.allnations.com.br/wsIntEstoqueClientesV2/ServicoReservasPedidosExt.asmx/RetornarListaProdutosEstoque?CodigoCliente=%s&Senha=%s&Data=%s`, config.AllNations.User, config.AllNations.Password, config.AllNations.LastReqTimeIni)
@@ -129,20 +127,20 @@ func main() {
 
 	// log.Println("url: ", url)
 
-	res, err := http.Get(url)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer res.Body.Close()
-	// bodyResult, err := ioutil.ReadAll(res.Header)
-	bodyResult, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-	for k, v := range res.Header {
-		log.Printf("%s - %s", k, v)
-	}
-	log.Printf("body: %s", bodyResult)
+	// res, err := http.Get(url)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// defer res.Body.Close()
+	// // bodyResult, err := ioutil.ReadAll(res.Header)
+	// bodyResult, err := ioutil.ReadAll(res.Body)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// for k, v := range res.Header {
+	// 	log.Printf("%s - %s", k, v)
+	// }
+	// log.Printf("body: %s", bodyResult)
 
 	xmlFile, err := os.Open("./xml/arquivo_integracao_exemplo.xml")
 	if err != nil {
@@ -159,8 +157,9 @@ func main() {
 	}
 	// fmt.Println("products: ", products)
 	// fmt.Println("product-1: ", products.Produto[1])
-	fmt.Println("Code: ", aldoXMLDoc.Products[1].Code)
-	fmt.Println("Description: ", aldoXMLDoc.Products[1].Description)
+	// fmt.Println("Code: ", aldoXMLDoc.Products[1].Code)
+	// fmt.Println("Description: ", aldoXMLDoc.Products[1].Description)
+	// fmt.Println("Price: ", aldoXMLDoc.Products[1].Price)
 	defer xmlFile.Close()
 
 	// var f interface{}
@@ -192,7 +191,7 @@ func main() {
 	// fmt.Println(f)
 
 	// log.Println("aldo products: ", aldoProds)
-	products := aldoXMLDoc.process()
+	_ = aldoXMLDoc.process()
 
 }
 
@@ -242,20 +241,20 @@ func (doc *xmlDoc) process() (products []aldoProduct) {
 	minPrice = math.MaxFloat32
 	var maxPrice float32
 	var priceSum float32
-	var averagePrice float32
-	var brand map[string]int
-	var category map[string]int
-	var available int
+	// var brand map[string]int
+	// var category map[string]int
+	// var available int
 	for _, xmlProduct := range doc.Products {
 		var product aldoProduct
 		product.Brand = xmlProduct.Brand
 		//Price.
 		pirce, err := convertStrBrDecimalToFloat32(xmlProduct.Price)
 		if err != nil {
-			log.Println("Could not convert price, product code: %s, price: %s", xmlProduct.Code, xmlProduct.Price)
+			log.Printf("Could not convert price, product code: %s, price: %s\n", xmlProduct.Code, xmlProduct.Price)
 			continue
 		}
 		product.Price = pirce
+		fmt.Println("Price: ", product.Price)
 		// Max price.
 		if product.Price > maxPrice {
 			maxPrice = product.Price
@@ -268,7 +267,12 @@ func (doc *xmlDoc) process() (products []aldoProduct) {
 		// Pric sum.
 		priceSum += product.Price
 	}
-	averagePrice := priceSum / len(products)
+	// Average price.
+	averagePrice := priceSum / float32(len(products))
+
+	fmt.Println("Min price: ", minPrice)
+	fmt.Println("Max price: ", maxPrice)
+	fmt.Println("Average price: ", toDecimal(averagePrice))
 	return products
 }
 
@@ -277,12 +281,15 @@ func (doc *xmlDoc) process() (products []aldoProduct) {
 **************************************************************************************************/
 func convertStrBrDecimalToFloat32(str string) (val float32, err error) {
 	str = strings.Replace(str, ".", "", -1)
-	str = strings.Replace(str, ",", ".", 0)
+	str = strings.Replace(str, ",", ".", -1)
 	val64, err := strconv.ParseFloat(str, 32)
 	if err != nil {
-		return float32(val64), nil
+		return 0, err
 	}
-	return 0, err
+	return float32(val64), nil
+}
+func toDecimal(val float32) float32 {
+	return float32(math.Round(float64(val*100)) / 100)
 }
 
 /**************************************************************************************************
