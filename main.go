@@ -11,7 +11,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/douglasmg7/money"
 	"golang.org/x/net/html/charset"
+	// "github.com/douglasmg7/money"
 )
 
 // "github.com/rogpeppe/go-charset/charset"
@@ -49,12 +51,13 @@ type xmlProduct struct {
 	Category    string `xml:"categoria,attr"`
 	Description string `xml:"descricao,attr"`
 	// Unidade           string `xml:"unidade,attr"`
-	Multiplo string `xml:"multiplo,attr"`
-	Price    string `xml:"preco,attr"`
-	// Precoeup          string `xml:"precoeup,attr"`
-	Weight       string `xml:"peso,attr"`
-	TecDesc      string `xml:"descricao_tecnica,attr"`
-	Availability string `xml:"disponivel,attr"`
+	Multiplo    string `xml:"multiplo,attr"`
+	DealerPrice string `xml:"preco,attr"`
+	// Suggestion price to sell.
+	SuggestionPrice string `xml:"precoeup,attr"`
+	Weight          string `xml:"peso,attr"`
+	TecDesc         string `xml:"descricao_tecnica,attr"`
+	Availability    string `xml:"disponivel,attr"`
 	// Ipi               string `xml:"ipi,attr"`
 	Measurements string `xml:"dimensoes,attr"`
 	// Abnt              string `xml:"abnt,attr"`
@@ -73,6 +76,7 @@ type xmlProduct struct {
 	// CategoriaTi       string `xml:"categoria_ti,attr"`
 	WarrantyTime string `xml:"tempo_garantia,attr"`
 	RMAProcedure string `xml:"procedimentos_rma,attr"`
+	// YoutubeLink         string `xml:"link_youtube,attr"`
 	// EmpFilial         string `xml:"emp_filial,attr"`
 	// Potencia          string `xml:"potencia,attr"`
 }
@@ -83,7 +87,8 @@ type aldoProduct struct {
 	Category            string
 	Description         string
 	Multiple            string
-	Price               float32
+	DealerPrice         money.Money
+	SuggestionPrice     money.Money
 	Weight              int // Peso(gr).
 	TecnicalDescription string
 	Availability        bool
@@ -142,7 +147,8 @@ func main() {
 	// }
 	// log.Printf("body: %s", bodyResult)
 
-	xmlFile, err := os.Open("./xml/arquivo_integracao_exemplo.xml")
+	// xmlFile, err := os.Open("./xml/arquivo_integracao_exemplo.xml")
+	xmlFile, err := os.Open("./xml/test.xml")
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -237,42 +243,47 @@ func init() {
 
 func (doc *xmlDoc) process() (products []aldoProduct) {
 	// Price.
-	var minPrice float32
+	var minPrice money.Money
 	minPrice = math.MaxFloat32
-	var maxPrice float32
-	var priceSum float32
+	var maxPrice money.Money
+	var priceSum money.Money
 	// var brand map[string]int
 	// var category map[string]int
 	// var available int
 	for _, xmlProduct := range doc.Products {
 		var product aldoProduct
+
+		// Brand.
 		product.Brand = xmlProduct.Brand
+
 		//Price.
-		pirce, err := convertStrBrDecimalToFloat32(xmlProduct.Price)
+		var err error
+		product.DealerPrice, err = money.Parse(xmlProduct.DealerPrice, ",")
 		if err != nil {
-			log.Printf("Could not convert price, product code: %s, price: %s\n", xmlProduct.Code, xmlProduct.Price)
+			log.Printf("Could not convert price, product code: %s, price: %s\n", xmlProduct.Code, xmlProduct.DealerPrice)
 			continue
 		}
-		product.Price = pirce
-		fmt.Println("Price: ", product.Price)
+		// fmt.Println("DealerPrice: ", product.DealerPrice)
 		// Max price.
-		if product.Price > maxPrice {
-			maxPrice = product.Price
+		if product.DealerPrice > maxPrice {
+			maxPrice = product.DealerPrice
 		}
 		// Min price.
-		if product.Price < minPrice {
-			minPrice = product.Price
+		if product.DealerPrice < minPrice {
+			minPrice = product.DealerPrice
 		}
 		products = append(products, product)
 		// Pric sum.
-		priceSum += product.Price
+		priceSum += product.DealerPrice
 	}
 	// Average price.
-	averagePrice := priceSum / float32(len(products))
+	averagePrice := priceSum.Divide(len(products))
 
 	fmt.Println("Min price: ", minPrice)
 	fmt.Println("Max price: ", maxPrice)
-	fmt.Println("Average price: ", toDecimal(averagePrice))
+	fmt.Println("Average price: ", averagePrice)
+	fmt.Println("Product quantity: ", len(products))
+
 	return products
 }
 
