@@ -1,11 +1,7 @@
 {
-    "wsAldo": {
-        "user": "",
-        "password": ""
-    },
-    "allNations": {
-        "user": "",
-        "password": "",
-        "lastReqTimeIni": "2015-01-01T00:00:00.000Z"       
-    }
+    "user": "",
+    "password": "",
+    "filterMinPrice" : 2000.00,
+    "filterMaxPrice" : 5000.00,
+    "listCategories" : true
 }

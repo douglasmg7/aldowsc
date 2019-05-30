@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -30,15 +32,11 @@ import (
 
 // Configuration file.
 type configuration struct {
-	WsAldo struct {
-		User     string `json:"user"`
-		Password string `json:"password"`
-	} `json:"wsAldo"`
-	AllNations struct {
-		User           string `json:"user"`
-		Password       string `json:"password"`
-		LastReqTimeIni string `json:"lastReqTimeIni"`
-	} `json:"allNations"`
+	User           string      `json:"user"`
+	Password       string      `json:"password"`
+	FilterMinPrice money.Money `json:"filterMinPrice"`
+	FilterMaxPrice money.Money `json:"filterMaxPrice"`
+	ListCategories bool        `json:"listCategories"`
 }
 
 type xmlDoc struct {
@@ -246,15 +244,14 @@ func (doc *xmlDoc) process() (products []aldoProduct) {
 	var minPrice money.Money
 	minPrice = math.MaxFloat32
 	var maxPrice money.Money
+	var maxPriceCodeProduct string
+	var maxPriceDescriptionProduct string
 	var priceSum money.Money
 	// var brand map[string]int
-	// var category map[string]int
+	category := map[string]int{}
 	// var available int
 	for _, xmlProduct := range doc.Products {
 		var product aldoProduct
-
-		// Brand.
-		product.Brand = xmlProduct.Brand
 
 		//Price.
 		var err error
@@ -263,10 +260,26 @@ func (doc *xmlDoc) process() (products []aldoProduct) {
 			log.Printf("Could not convert price, product code: %s, price: %s\n", xmlProduct.Code, xmlProduct.DealerPrice)
 			continue
 		}
+		// Filter.
+		// if product.DealerPrice > config.WsAldo.FilterMaxPrice || product.DealerPrice < config.WsAldo.FilterMinPrice {
+		// 	continue
+		// }
+		// Code.
+		product.Code = xmlProduct.Code
+		// Description.
+		product.Description = xmlProduct.Description
+		// Brands.
+		product.Brand = xmlProduct.Brand
+		// Categories.
+		elem, _ := category[xmlProduct.Category]
+		category[xmlProduct.Category] = elem + 1
+
 		// fmt.Println("DealerPrice: ", product.DealerPrice)
 		// Max price.
 		if product.DealerPrice > maxPrice {
 			maxPrice = product.DealerPrice
+			maxPriceCodeProduct = product.Code
+			maxPriceDescriptionProduct = product.Description
 		}
 		// Min price.
 		if product.DealerPrice < minPrice {
@@ -279,10 +292,66 @@ func (doc *xmlDoc) process() (products []aldoProduct) {
 	// Average price.
 	averagePrice := priceSum.Divide(len(products))
 
-	fmt.Println("Min price: ", minPrice)
-	fmt.Println("Max price: ", maxPrice)
-	fmt.Println("Average price: ", averagePrice)
-	fmt.Println("Product quantity: ", len(products))
+	log.Printf("Min price: %.2f\n", minPrice)
+	log.Printf("Max price: %.2f\n", maxPrice)
+	log.Printf("Max price code product: %s\n", maxPriceCodeProduct)
+	log.Printf("Max price desc product: %s\n", maxPriceDescriptionProduct)
+	log.Printf("Sum price: %f", priceSum)
+	log.Printf("Product quantity: %d", len(products))
+	log.Printf("Average price: %.4f", averagePrice)
+	// List categories.
+	if config.ListCategories {
+		log.Printf("Categories len: %d", len(category))
+		categoryNames := make([]string, 0, len(category))
+		for k, v := range category {
+			categoryNames = append(categoryNames, fmt.Sprintf("%s (%d)\n", k, v))
+			sort.Strings(categoryNames)
+		}
+		var bufListCategories bytes.Buffer
+		bufListCategories.WriteString(fmt.Sprintf("Product quantity: %d\n", len(products)))
+		bufListCategories.WriteString(fmt.Sprintf("Sub-category quantity: %d\n\n", len(category)))
+
+		// Create sub-categories and prepare write to file.
+		subCategories := map[string]string{}
+		for _, name := range categoryNames {
+			fmt.Print(name)
+			// bufListCategories.WriteString(name)
+			words := strings.Fields(name)
+			elem, exists := subCategories[words[0]]
+			subCategories[words[0]] = elem + name + "\n"
+			if !exists {
+				bufListCategories.WriteString(words[0] + "\n")
+			}
+			bufListCategories.WriteString("\t" + name)
+		}
+		bufListCategories.WriteString(fmt.Sprintf("\nCategory quantity: %d\n\n", len(subCategories)))
+
+		// Save on file.
+		categoriesFileName := "log/categories.log"
+		f, err := os.Create(categoriesFileName)
+		if err != nil {
+			log.Printf("Could not write to file %s, err: %s", categoriesFileName, err)
+		}
+		defer f.Close()
+		_, err = bufListCategories.WriteTo(f)
+		if err != nil {
+			log.Printf("Could not write to file %s, err: %s", categoriesFileName, err)
+		}
+		f.Sync()
+
+		// // Save on file.
+		// categoriesFileName := "log/categories.log"
+		// f, err := os.Create(categoriesFileName)
+		// if err != nil {
+		// 	log.Printf("Could not write to file %s, err: %s", categoriesFileName, err)
+		// }
+		// defer f.Close()
+		// _, err = bufListCategories.WriteTo(f)
+		// if err != nil {
+		// 	log.Printf("Could not write to file %s, err: %s", categoriesFileName, err)
+		// }
+		// f.Sync()
+	}
 
 	return products
 }
