@@ -329,13 +329,16 @@ func (doc *xmlDoc) process() (products []aldoProduct) {
 		// bufListCategories.WriteString(fmt.Sprintf("\nCategory quantity: %d\n\n", len(subCategories)))
 
 		// Save on file.
-		categoriesFileName := "list/categAll.log"
+		categoriesFileName := "list/categAll.list"
 		f, err := os.Create(categoriesFileName)
 		if err != nil {
 			log.Printf("Could not write to file %s, err: %s", categoriesFileName, err)
 		}
 		defer f.Close()
-		_, err = bufListCategories.WriteTo(f)
+		// Remove last new line.
+		sb := bytes.TrimRight(bufListCategories.Bytes(), "\n")
+		// Write to file.
+		_, err = f.Write(sb)
 		if err != nil {
 			log.Printf("Could not write to file %s, err: %s", categoriesFileName, err)
 		}

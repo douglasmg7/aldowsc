@@ -15,11 +15,23 @@ func main() {
 	// Create list with only categories to use.
 	b := bytes.Buffer{}
 	exclude := false
+	// printLines(categExc)
+
 	for _, l := range categAll {
+		// No blank line;
+		if strings.TrimSpace(l) == "" {
+			continue
+		}
 		for _, lExc := range categExc {
-			if strings.HasPrefix(l, lExc) {
-				exclude = true
+			// No blank line;
+			if strings.TrimSpace(lExc) == "" {
 				continue
+			}
+			if strings.HasPrefix(l, lExc) {
+				// fmt.Printf("Prefix : %s\n", lExc)
+				// fmt.Printf("Exclude: %s\n\n", l)
+				exclude = true
+				break
 			}
 		}
 		if !exclude {
@@ -28,8 +40,10 @@ func main() {
 		exclude = false
 		// fmt.Printf("%d-%s\n", i, l)
 	}
+	// Remove last new line.
+	sb := bytes.TrimRight(b.Bytes(), "\n")
 	// Write to file.
-	err := ioutil.WriteFile("../list/categUse", b.Bytes(), 0664)
+	err := ioutil.WriteFile("../list/categUse.list", sb, 0664)
 	if err != nil {
 		log.Fatal(err)
 	}
