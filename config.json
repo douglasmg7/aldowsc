@@ -1,7 +1,6 @@
 {
     "user": "",
     "password": "",
-    "filterMinPrice" : 2000.00,
-    "filterMaxPrice" : 5000.00,
-    "listCategories" : true
+    "filterMinPrice": 1000.00,
+    "filterMaxPrice": 40000.00
 }

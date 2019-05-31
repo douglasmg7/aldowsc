@@ -6,16 +6,15 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"math"
 	"os"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/douglasmg7/money"
 	"golang.org/x/net/html/charset"
-	// "github.com/douglasmg7/money"
 )
 
 // "github.com/rogpeppe/go-charset/charset"
@@ -36,7 +35,6 @@ type configuration struct {
 	Password       string      `json:"password"`
 	FilterMinPrice money.Money `json:"filterMinPrice"`
 	FilterMaxPrice money.Money `json:"filterMaxPrice"`
-	ListCategories bool        `json:"listCategories"`
 }
 
 type xmlDoc struct {
@@ -108,6 +106,7 @@ var devMode bool
 
 // Configuration.
 var config configuration
+var categExc []string
 
 func main() {
 	// http://webservice.aldo.com.br/asp.net/ferramentas/integracao.ashx?u=146612&p=zunk4c?wsdl
@@ -195,8 +194,11 @@ func main() {
 	// fmt.Println(f)
 
 	// log.Println("aldo products: ", aldoProds)
+
+	categExc = readList("list/categExc.list")
 	_ = aldoXMLDoc.process()
 
+	log.Printf("Finish.\n\n")
 }
 
 func init() {
@@ -244,15 +246,32 @@ func (doc *xmlDoc) process() (products []aldoProduct) {
 	var minPrice money.Money
 	minPrice = math.MaxFloat32
 	var maxPrice money.Money
-	var maxPriceCodeProduct string
-	var maxPriceDescriptionProduct string
+	// var maxPriceCodeProduct string
+	// var maxPriceDescriptionProduct string
 	var priceSum money.Money
+	var prodcutQtyCutByMaxPrice int
+	var prodcutQtyCutByMinPrice int
+	var prodcutQtyCutByCategFilter int
+	mCategoryAllQtd := map[string]int{}
+	mCategoryUsedQtd := map[string]int{}
 	// var brand map[string]int
-	category := map[string]int{}
+	// List of categories to get.
 	// var available int
 	for _, xmlProduct := range doc.Products {
+		// List all categories.
+		elem, _ := mCategoryAllQtd[xmlProduct.Category]
+		mCategoryAllQtd[xmlProduct.Category] = elem + 1
+		// Filter by categories.
 		var product aldoProduct
-
+		if !isCategorieHabToBeUsed(xmlProduct.Category) {
+			prodcutQtyCutByCategFilter++
+			continue
+		}
+		// Categories.
+		product.Category = xmlProduct.Category
+		// List used categories.
+		elem, _ = mCategoryUsedQtd[product.Category]
+		mCategoryUsedQtd[product.Category] = elem + 1
 		//Price.
 		var err error
 		product.DealerPrice, err = money.Parse(xmlProduct.DealerPrice, ",")
@@ -260,26 +279,29 @@ func (doc *xmlDoc) process() (products []aldoProduct) {
 			log.Printf("Could not convert price, product code: %s, price: %s\n", xmlProduct.Code, xmlProduct.DealerPrice)
 			continue
 		}
-		// Filter.
-		// if product.DealerPrice > config.WsAldo.FilterMaxPrice || product.DealerPrice < config.WsAldo.FilterMinPrice {
-		// 	continue
-		// }
+		// Filter max price.
+		if product.DealerPrice > config.FilterMaxPrice {
+			prodcutQtyCutByMaxPrice++
+			continue
+		}
+		// Filter min price.
+		if product.DealerPrice < config.FilterMinPrice {
+			prodcutQtyCutByMinPrice++
+			continue
+		}
 		// Code.
 		product.Code = xmlProduct.Code
 		// Description.
 		product.Description = xmlProduct.Description
 		// Brands.
 		product.Brand = xmlProduct.Brand
-		// Categories.
-		elem, _ := category[xmlProduct.Category]
-		category[xmlProduct.Category] = elem + 1
 
 		// fmt.Println("DealerPrice: ", product.DealerPrice)
 		// Max price.
 		if product.DealerPrice > maxPrice {
 			maxPrice = product.DealerPrice
-			maxPriceCodeProduct = product.Code
-			maxPriceDescriptionProduct = product.Description
+			// maxPriceCodeProduct = product.Code
+			// maxPriceDescriptionProduct = product.Description
 		}
 		// Min price.
 		if product.DealerPrice < minPrice {
@@ -288,93 +310,93 @@ func (doc *xmlDoc) process() (products []aldoProduct) {
 		products = append(products, product)
 		// Pric sum.
 		priceSum += product.DealerPrice
+
+		// log.Println(product.Description)
+		// log.Println(product.DealerPrice)
+		// log.Println()
 	}
 	// Average price.
-	averagePrice := priceSum.Divide(len(products))
+	// averagePrice := priceSum.Divide(len(products))
 
-	log.Printf("Min price: %.2f\n", minPrice)
-	log.Printf("Max price: %.2f\n", maxPrice)
-	log.Printf("Max price code product: %s\n", maxPriceCodeProduct)
-	log.Printf("Max price desc product: %s\n", maxPriceDescriptionProduct)
-	log.Printf("Sum price: %f", priceSum)
-	log.Printf("Product quantity: %d", len(products))
-	log.Printf("Average price: %.4f", averagePrice)
-	// List categories.
-	if config.ListCategories {
-		log.Printf("Categories len: %d", len(category))
-		categoryNames := make([]string, 0, len(category))
-		for k := range category {
-			categoryNames = append(categoryNames, fmt.Sprintf("%s\n", k))
-			// categoryNames = append(categoryNames, fmt.Sprintf("%s (%d)\n", k, v))
-			sort.Strings(categoryNames)
-		}
-		var bufListCategories bytes.Buffer
-		// bufListCategories.WriteString(fmt.Sprintf("Product quantity: %d\n", len(products)))
-		// bufListCategories.WriteString(fmt.Sprintf("Sub-category quantity: %d\n\n", len(category)))
-
-		// Create sub-categories and prepare write to file.
-		// subCategories := map[string]string{}
-		for _, name := range categoryNames {
-			// fmt.Print(name)
-			bufListCategories.WriteString(name)
-
-			// words := strings.Fields(name)
-			// elem, exists := subCategories[words[0]]
-			// subCategories[words[0]] = elem + name + "\n"
-			// if !exists {
-			// 	bufListCategories.WriteString(words[0] + "\n")
-			// }
-			// bufListCategories.WriteString("\t" + name)
-		}
-		// bufListCategories.WriteString(fmt.Sprintf("\nCategory quantity: %d\n\n", len(subCategories)))
-
-		// Save on file.
-		categoriesFileName := "list/categAll.list"
-		f, err := os.Create(categoriesFileName)
-		if err != nil {
-			log.Printf("Could not write to file %s, err: %s", categoriesFileName, err)
-		}
-		defer f.Close()
-		// Remove last new line.
-		sb := bytes.TrimRight(bufListCategories.Bytes(), "\n")
-		// Write to file.
-		_, err = f.Write(sb)
-		if err != nil {
-			log.Printf("Could not write to file %s, err: %s", categoriesFileName, err)
-		}
-		f.Sync()
-
-		// // Save on file.
-		// categoriesFileName := "log/categories.log"
-		// f, err := os.Create(categoriesFileName)
-		// if err != nil {
-		// 	log.Printf("Could not write to file %s, err: %s", categoriesFileName, err)
-		// }
-		// defer f.Close()
-		// _, err = bufListCategories.WriteTo(f)
-		// if err != nil {
-		// 	log.Printf("Could not write to file %s, err: %s", categoriesFileName, err)
-		// }
-		// f.Sync()
-	}
-
+	// log.Printf("Min price: %.2f\n", minPrice)
+	// log.Printf("Max price: %.2f\n", maxPrice)
+	// log.Printf("Max price code product: %s\n", maxPriceCodeProduct)
+	// log.Printf("Max price desc product: %s\n", maxPriceDescriptionProduct)
+	// log.Printf("Sum price: %f", priceSum)
+	// log.Printf("Average price: %.4f", averagePrice)
+	log.Printf("Products quantity: %d", len(doc.Products))
+	log.Printf("Products quantity cut by min price(%.2f): %d", config.FilterMinPrice, prodcutQtyCutByMinPrice)
+	log.Printf("Products quantity cut by max price(%.2f): %d", config.FilterMaxPrice, prodcutQtyCutByMaxPrice)
+	log.Printf("Products quantity cut by categories filter: %d", prodcutQtyCutByCategFilter)
+	log.Printf("Product used quantity: %d", len(products))
+	log.Printf("All  Categories quantity: %d", len(mCategoryAllQtd))
+	log.Printf("Used Categories quantity: %d", len(mCategoryUsedQtd))
+	writeList(&mCategoryUsedQtd, "list/categUse.list")
+	writeList(&mCategoryAllQtd, "list/categAll.list")
 	return products
 }
 
 /**************************************************************************************************
 * Util.
 **************************************************************************************************/
-func convertStrBrDecimalToFloat32(str string) (val float32, err error) {
-	str = strings.Replace(str, ".", "", -1)
-	str = strings.Replace(str, ",", ".", -1)
-	val64, err := strconv.ParseFloat(str, 32)
+// readlist uppercase, remove spaces and create a list of lines.
+func readList(fileName string) []string {
+	b, err := ioutil.ReadFile(fileName)
 	if err != nil {
-		return 0, err
+		log.Fatal(err)
 	}
-	return float32(val64), nil
+	s := strings.Replace(string(b), " ", "", -1)
+	s = strings.ToUpper(s)
+	return strings.Split(s, "\n")
 }
-func toDecimal(val float32) float32 {
-	return float32(math.Round(float64(val*100)) / 100)
+
+// // readlist uppercase, remove spaces and create a list of lines.
+// func getCategMapToUse(fileName string) *map[string]int {
+// 	b, err := ioutil.ReadFile(fileName)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	// s := strings.Replace(string(b), " ", "", -1)
+// 	// s = strings.ToUpper(s)
+// 	ss := strings.Split(string(b), "\n")
+// 	m := map[string]int{}
+// 	for _, s := range ss {
+// 		m[s] = 1
+// 	}
+// 	return &m
+// }
+
+// isCategorieHabToBeUsed verify if categorie is to be used.
+func isCategorieHabToBeUsed(categorie string) bool {
+	categorie = strings.ToUpper(strings.Replace(categorie, " ", "", -1))
+	for _, categorieExc := range categExc {
+		if strings.HasPrefix(categorie, categorieExc) {
+			// fmt.Printf("Prefix : %s\n", lExc)
+			// fmt.Printf("Exclude: %s\n\n", l)
+			return false
+		}
+	}
+	return true
+}
+
+// writeList write a list to a file.
+func writeList(m *map[string]int, fileName string) {
+	b := bytes.Buffer{}
+	ss := []string{}
+	// Sort.
+	for k, v := range *m {
+		ss = append(ss, fmt.Sprintf("%s (%d)\n", k, v))
+	}
+	sort.Strings(ss)
+	// To buffer.
+	for _, s := range ss {
+		b.WriteString(s)
+	}
+	// Write to file.
+	err := ioutil.WriteFile(fileName, bytes.TrimRight(b.Bytes(), "\n"), 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 /**************************************************************************************************
@@ -386,9 +408,9 @@ func setMode() {
 	for _, arg := range os.Args[1:] {
 		if arg == "dev" {
 			devMode = true
-			log.Println("Starting - development mode.")
+			log.Printf("Start - development mode.\n")
 			return
 		}
 	}
-	log.Println("Starting - production mode.")
+	log.Printf("Start - production mode.\n")
 }
