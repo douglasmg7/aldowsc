@@ -303,31 +303,33 @@ func (doc *xmlDoc) process() (products []aldoProduct) {
 	if config.ListCategories {
 		log.Printf("Categories len: %d", len(category))
 		categoryNames := make([]string, 0, len(category))
-		for k, v := range category {
-			categoryNames = append(categoryNames, fmt.Sprintf("%s (%d)\n", k, v))
+		for k := range category {
+			categoryNames = append(categoryNames, fmt.Sprintf("%s\n", k))
+			// categoryNames = append(categoryNames, fmt.Sprintf("%s (%d)\n", k, v))
 			sort.Strings(categoryNames)
 		}
 		var bufListCategories bytes.Buffer
-		bufListCategories.WriteString(fmt.Sprintf("Product quantity: %d\n", len(products)))
-		bufListCategories.WriteString(fmt.Sprintf("Sub-category quantity: %d\n\n", len(category)))
+		// bufListCategories.WriteString(fmt.Sprintf("Product quantity: %d\n", len(products)))
+		// bufListCategories.WriteString(fmt.Sprintf("Sub-category quantity: %d\n\n", len(category)))
 
 		// Create sub-categories and prepare write to file.
-		subCategories := map[string]string{}
+		// subCategories := map[string]string{}
 		for _, name := range categoryNames {
-			fmt.Print(name)
-			// bufListCategories.WriteString(name)
-			words := strings.Fields(name)
-			elem, exists := subCategories[words[0]]
-			subCategories[words[0]] = elem + name + "\n"
-			if !exists {
-				bufListCategories.WriteString(words[0] + "\n")
-			}
-			bufListCategories.WriteString("\t" + name)
+			// fmt.Print(name)
+			bufListCategories.WriteString(name)
+
+			// words := strings.Fields(name)
+			// elem, exists := subCategories[words[0]]
+			// subCategories[words[0]] = elem + name + "\n"
+			// if !exists {
+			// 	bufListCategories.WriteString(words[0] + "\n")
+			// }
+			// bufListCategories.WriteString("\t" + name)
 		}
-		bufListCategories.WriteString(fmt.Sprintf("\nCategory quantity: %d\n\n", len(subCategories)))
+		// bufListCategories.WriteString(fmt.Sprintf("\nCategory quantity: %d\n\n", len(subCategories)))
 
 		// Save on file.
-		categoriesFileName := "log/categories.log"
+		categoriesFileName := "list/categAll.log"
 		f, err := os.Create(categoriesFileName)
 		if err != nil {
 			log.Printf("Could not write to file %s, err: %s", categoriesFileName, err)
