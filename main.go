@@ -311,7 +311,7 @@ func (doc *xmlDoc) process() (products []aldoProduct) {
 		// Pric sum.
 		priceSum += product.DealerPrice
 
-		// log.Println(product.Description)
+		fmt.Printf("[%s] - %s - R$%.2f\n", product.Category, product.Description, product.DealerPrice)
 		// log.Println(product.DealerPrice)
 		// log.Println()
 	}
