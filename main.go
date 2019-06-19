@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/gob"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -108,7 +109,23 @@ var devMode bool
 var config configuration
 var categExc []string
 
+type AldoProducts []aldoProduct
+
 func main() {
+
+	// // Get products from last update.
+	// productsRead := new(AldoProducts)
+	// err := readGob("./data/products.gob", productsRead)
+	// if err != nil {
+	// log.Fatalln(err)
+	// }
+	// fmt.Printf("type: %T\n", *productsRead)
+	// fmt.Println("Prod qtd: ", len(*productsRead))
+	// fmt.Println("product-1", (*productsRead)[0])
+	// for _, prod := range *productsRead {
+	// fmt.Println(prod.Code, "\n")
+	// }
+
 	// http://webservice.aldo.com.br/asp.net/ferramentas/integracao.ashx?u=146612&p=zunk4c?wsdl
 	// http://webservice.aldo.com.br/asp.net/ferramentas/integracao.ashx?u=146612&p=zunk4c
 	// http://webservice.aldo.com.br/asp.net/ferramentas/saldoproduto.ashx?u=146612&p=zunk4c&codigo=20764-8&qtde=1&emp_filial=1
@@ -196,7 +213,64 @@ func main() {
 	// log.Println("aldo products: ", aldoProds)
 
 	categExc = readList("list/categExc.list")
-	_ = aldoXMLDoc.process()
+	aldoProducts := aldoXMLDoc.process()
+	fmt.Println("Qutatity before serialize: ", len(aldoProducts))
+
+	b := new(bytes.Buffer)
+	e := gob.NewEncoder(b)
+	err = e.Encode(aldoProducts)
+	// err = writeGob("./data/products.gob", aldoProducts)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var decodedProducts AldoProducts
+
+	d := gob.NewDecoder(b)
+	// d.CharsetReader = charset.NewReaderLabel
+	for {
+		err = d.Decode(&decodedProducts)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	fmt.Println("Qutatity after serialize: ", len(decodedProducts))
+	// fmt.Println(decodedProducts)
+	fmt.Println(decodedProducts[200])
+
+	// categExc = readList("list/categExc.list")
+	// aldoProducts := aldoXMLDoc.process()
+	// fmt.Println("Qutatity before serialize: ", len(aldoProducts))
+
+	// b := new(bytes.Buffer)
+	// e := xml.NewEncoder(b)
+	// err = e.Encode(aldoProducts)
+	// // err = writeGob("./data/products.gob", aldoProducts)
+	// if err != nil {
+	// log.Fatal(err)
+	// }
+
+	// var decodedProducts AldoProducts
+
+	// d := xml.NewDecoder(b)
+	// d.CharsetReader = charset.NewReaderLabel
+	// for {
+	// err = d.Decode(&decodedProducts)
+	// if err == io.EOF {
+	// break
+	// }
+	// if err != nil {
+	// log.Fatal(err)
+	// }
+	// }
+
+	// fmt.Println("Qutatity after serialize: ", len(decodedProducts))
+	// // fmt.Println(decodedProducts)
+	// fmt.Println(decodedProducts[200])
 
 	log.Printf("Finish.\n\n")
 }
@@ -234,14 +308,13 @@ func init() {
 	// fmt.Println("WsAldo: ", config.WsAldo)
 	// fmt.Println("User: ", config.WsAldo.User)
 	// fmt.Println("Password: ", config.WsAldo.Password)
-
 }
 
 /**************************************************************************************************
 * Statistics.
 **************************************************************************************************/
 
-func (doc *xmlDoc) process() (products []aldoProduct) {
+func (doc *xmlDoc) process() (products AldoProducts) {
 	// Price.
 	var minPrice money.Money
 	minPrice = math.MaxFloat32
@@ -307,11 +380,14 @@ func (doc *xmlDoc) process() (products []aldoProduct) {
 		if product.DealerPrice < minPrice {
 			minPrice = product.DealerPrice
 		}
+		product.WarrantyTime = "4 dias"
+		product.RMAProcedure = "no-procedure"
+
 		products = append(products, product)
 		// Pric sum.
 		priceSum += product.DealerPrice
 
-		fmt.Printf("[%s] - %s - R$%.2f\n", product.Category, product.Description, product.DealerPrice)
+		// fmt.Printf("[%s] - %s - R$%.2f\n", product.Category, product.Description, product.DealerPrice)
 		// log.Println(product.DealerPrice)
 		// log.Println()
 	}
@@ -335,6 +411,31 @@ func (doc *xmlDoc) process() (products []aldoProduct) {
 	writeList(&mCategoryAllQtd, "list/categAll.list")
 	return products
 }
+
+/**************************************************************************************************
+* Encode / decode.
+**************************************************************************************************/
+// // writeGob encode to a binary file.
+// func writeGob(filePath string, data AldoProducts) error {
+// file, err := os.Create(filePath)
+// if err == nil {
+// encoder := xml.NewEncoder(file)
+// encoder.Encode(data)
+// }
+// file.Close()
+// return err
+// }
+
+// // readGob decode from binary file.
+// func readGob(filePath string, data *AldoProducts) error {
+// file, err := os.Open(filePath)
+// if err == nil {
+// decoder := xml.NewDecoder(file)
+// err = decoder.Decode(data)
+// }
+// file.Close()
+// return err
+// }
 
 /**************************************************************************************************
 * Util.

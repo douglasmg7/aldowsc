@@ -6,4 +6,6 @@ log/*
 !log/.gitkeep 
 xml/*
 !xml/.gitkeep
+data/*
+!data/.gitkeep
 
