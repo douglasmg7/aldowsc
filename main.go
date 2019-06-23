@@ -13,6 +13,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/douglasmg7/money"
 	"golang.org/x/net/html/charset"
@@ -78,7 +79,7 @@ type xmlProduct struct {
 	// Potencia          string `xml:"potencia,attr"`
 }
 
-type aldoProduct struct {
+type AldoProduct struct {
 	Code                string
 	Brand               string
 	Category            string
@@ -89,17 +90,21 @@ type aldoProduct struct {
 	Weight              int // Peso(gr).
 	TecnicalDescription string
 	Availability        bool
-	Dimension           dimension
+	Dimension           Dimension
 	PictureLinks        []string
 	WarrantyTime        string // Days.
 	RMAProcedure        string // ?
-
+	CreatedAt           time.Time
+	ChangedAt           time.Time
+	changed             bool
+	New                 bool
+	Removed             bool
 }
 
-type dimension struct {
-	length int // Comprimento(mm).
-	width  int // Largura(mm).
-	height int // Altura(mm).
+type Dimension struct {
+	Length int // Comprimento(mm).
+	Width  int // Largura(mm).
+	Height int // Altura(mm).
 }
 
 // Development mode.
@@ -109,7 +114,8 @@ var devMode bool
 var config configuration
 var categExc []string
 
-type AldoProducts []aldoProduct
+type AldoProducts []AldoProduct
+type AldoProductsMap map[string]AldoProduct
 
 func main() {
 
@@ -166,6 +172,7 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+	defer xmlFile.Close()
 
 	aldoXMLDoc := xmlDoc{}
 	decoder := xml.NewDecoder(xmlFile)
@@ -180,97 +187,57 @@ func main() {
 	// fmt.Println("Code: ", aldoXMLDoc.Products[1].Code)
 	// fmt.Println("Description: ", aldoXMLDoc.Products[1].Description)
 	// fmt.Println("Price: ", aldoXMLDoc.Products[1].Price)
-	defer xmlFile.Close()
-
-	// var f interface{}
-	// decoder := xml.NewDecoder(xmlFile)
-	// decoder.CharsetReader = charset.NewReader
-	// err = decoder.Decode(&f)
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-	// fmt.Println("f: ", f)
-	// defer xmlFile.Close()
-
-	// aldoProds := aldoProducts{}
-	// decoder := xml.NewDecoder(xmlFile)
-	// decoder.CharsetReader = charset.NewReaderLabel
-	// decoder.Decode(&aldoProds)
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-
-	// sbFile, _ := ioutil.ReadAll(xmlFile)
-	// log.Printf("%s", sbFile)
-
-	// var f interface{}
-	// err = xml.Unmarshal(sbFile, &f)
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-	// fmt.Println(f)
-
-	// log.Println("aldo products: ", aldoProds)
 
 	categExc = readList("list/categExc.list")
-	aldoProducts := aldoXMLDoc.process()
-	fmt.Println("Qutatity before serialize: ", len(aldoProducts))
+	aldoProductsMap := aldoXMLDoc.process()
+	fmt.Println("Products quantity processed from xml: ", len(aldoProductsMap))
 
-	b := new(bytes.Buffer)
-	e := gob.NewEncoder(b)
-	err = e.Encode(aldoProducts)
-	// err = writeGob("./data/products.gob", aldoProducts)
+	// Deserialize last processed products.
+	var decodedProducts AldoProductsMap
+	err = readGob("data/products.gob", &decodedProducts)
+	// If error is other then not exist file.
+	if err != nil && !os.IsNotExist(err) {
+		log.Fatal(err)
+	}
+	fmt.Println("Qutatity after serialize: ", len(decodedProducts))
+	// fmt.Println(decodedProducts["36002-4"])
+
+	// Update and new products.
+	for k, v := range aldoProductsMap {
+		product, exist := decodedProducts[k]
+		// New.
+		if !exist {
+			log.Println("New product:", v.Code)
+			v.New = true
+			v.CreatedAt = time.Now()
+			v.ChangedAt = v.CreatedAt
+			continue
+		}
+		// Changed.
+		if v.Description != product.Description {
+			log.Println("Changed product:", v.Code)
+			v.changed = true
+			v.ChangedAt = time.Now()
+			continue
+		}
+		// Not changed.
+		v.CreatedAt = product.CreatedAt
+		v.ChangedAt = product.ChangedAt
+	}
+	// Removed products.
+	for k, v := range decodedProducts {
+		_, exist := aldoProductsMap[k]
+		if !exist {
+			log.Println("Removed product:", v.Code)
+			v.Removed = true
+		}
+	}
+
+	// Serialize products.
+	err = writeGob("data/products.gob", &aldoProductsMap)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	var decodedProducts AldoProducts
-
-	d := gob.NewDecoder(b)
-	// d.CharsetReader = charset.NewReaderLabel
-	for {
-		err = d.Decode(&decodedProducts)
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	fmt.Println("Qutatity after serialize: ", len(decodedProducts))
-	// fmt.Println(decodedProducts)
-	fmt.Println(decodedProducts[200])
-
-	// categExc = readList("list/categExc.list")
-	// aldoProducts := aldoXMLDoc.process()
-	// fmt.Println("Qutatity before serialize: ", len(aldoProducts))
-
-	// b := new(bytes.Buffer)
-	// e := xml.NewEncoder(b)
-	// err = e.Encode(aldoProducts)
-	// // err = writeGob("./data/products.gob", aldoProducts)
-	// if err != nil {
-	// log.Fatal(err)
-	// }
-
-	// var decodedProducts AldoProducts
-
-	// d := xml.NewDecoder(b)
-	// d.CharsetReader = charset.NewReaderLabel
-	// for {
-	// err = d.Decode(&decodedProducts)
-	// if err == io.EOF {
-	// break
-	// }
-	// if err != nil {
-	// log.Fatal(err)
-	// }
-	// }
-
-	// fmt.Println("Qutatity after serialize: ", len(decodedProducts))
-	// // fmt.Println(decodedProducts)
-	// fmt.Println(decodedProducts[200])
 
 	log.Printf("Finish.\n\n")
 }
@@ -313,8 +280,9 @@ func init() {
 /**************************************************************************************************
 * Statistics.
 **************************************************************************************************/
-
-func (doc *xmlDoc) process() (products AldoProducts) {
+// process create a map of products aldo from xml file format.
+func (doc *xmlDoc) process() (productsMap AldoProductsMap) {
+	productsMap = map[string]AldoProduct{}
 	// Price.
 	var minPrice money.Money
 	minPrice = math.MaxFloat32
@@ -335,7 +303,7 @@ func (doc *xmlDoc) process() (products AldoProducts) {
 		elem, _ := mCategoryAllQtd[xmlProduct.Category]
 		mCategoryAllQtd[xmlProduct.Category] = elem + 1
 		// Filter by categories.
-		var product aldoProduct
+		var product AldoProduct
 		if !isCategorieHabToBeUsed(xmlProduct.Category) {
 			prodcutQtyCutByCategFilter++
 			continue
@@ -382,8 +350,9 @@ func (doc *xmlDoc) process() (products AldoProducts) {
 		}
 		product.WarrantyTime = "4 dias"
 		product.RMAProcedure = "no-procedure"
+		product.Dimension = Dimension{}
 
-		products = append(products, product)
+		productsMap[product.Code] = product
 		// Pric sum.
 		priceSum += product.DealerPrice
 
@@ -404,38 +373,47 @@ func (doc *xmlDoc) process() (products AldoProducts) {
 	log.Printf("Products quantity cut by min price(%.2f): %d", config.FilterMinPrice, prodcutQtyCutByMinPrice)
 	log.Printf("Products quantity cut by max price(%.2f): %d", config.FilterMaxPrice, prodcutQtyCutByMaxPrice)
 	log.Printf("Products quantity cut by categories filter: %d", prodcutQtyCutByCategFilter)
-	log.Printf("Product used quantity: %d", len(products))
+	log.Printf("Product used quantity: %d", len(productsMap))
 	log.Printf("All  Categories quantity: %d", len(mCategoryAllQtd))
 	log.Printf("Used Categories quantity: %d", len(mCategoryUsedQtd))
 	writeList(&mCategoryUsedQtd, "list/categUse.list")
 	writeList(&mCategoryAllQtd, "list/categAll.list")
-	return products
+	return productsMap
 }
 
 /**************************************************************************************************
 * Encode / decode.
 **************************************************************************************************/
-// // writeGob encode to a binary file.
-// func writeGob(filePath string, data AldoProducts) error {
-// file, err := os.Create(filePath)
-// if err == nil {
-// encoder := xml.NewEncoder(file)
-// encoder.Encode(data)
-// }
-// file.Close()
-// return err
-// }
+// writeGob encode to a binary file.
+func writeGob(filePath string, data *AldoProductsMap) error {
+	file, err := os.Create(filePath)
+	defer file.Close()
+	if err == nil {
+		encoder := gob.NewEncoder(file)
+		err = encoder.Encode(*data)
+	}
+	return err
+}
 
-// // readGob decode from binary file.
-// func readGob(filePath string, data *AldoProducts) error {
-// file, err := os.Open(filePath)
-// if err == nil {
-// decoder := xml.NewDecoder(file)
-// err = decoder.Decode(data)
-// }
-// file.Close()
-// return err
-// }
+// readGob decode from binary file.
+func readGob(filePath string, data *AldoProductsMap) error {
+	file, err := os.Open(filePath)
+	defer file.Close()
+	if err == nil {
+		decoder := gob.NewDecoder(file)
+		for {
+			err = decoder.Decode(data)
+			if err == io.EOF {
+				return nil
+				// break
+			}
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return err
+}
 
 /**************************************************************************************************
 * Util.
