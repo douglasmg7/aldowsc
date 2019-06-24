@@ -1,5 +1,5 @@
 main
-db/wsc-aldo.db
+db/aldo.db
 
 # Include directories but not the files.
 log/*

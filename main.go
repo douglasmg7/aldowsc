@@ -2,6 +2,9 @@ package main
 
 import (
 	"bytes"
+	"database/sql"
+	"time"
+	// "database/sql"
 	// "encoding/gob"
 	"encoding/json"
 	"encoding/xml"
@@ -13,11 +16,15 @@ import (
 	"os"
 	"sort"
 	"strings"
-	// "time"
 
 	"github.com/douglasmg7/money"
+	// "github.com/jinzhu/gorm"
+
+	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/net/html/charset"
 )
+
+var db *sql.DB
 
 // Configuration file.
 type configuration struct {
@@ -67,6 +74,43 @@ type xmlProduct struct {
 	// Potencia          string `xml:"potencia,attr"`
 }
 
+// type Product struct {
+// Code                string
+// Brand               string
+// Category            string
+// Description         string
+// Multiple            int
+// DealerPrice         money.Money
+// SuggestionPrice     money.Money
+// TecnicalDescription string
+// Availability        bool
+// Length              int // mm.
+// Width               int // mm.
+// heigh               int // mm.
+// Weight              int // grams.
+// PictureLinks        []string
+// WarrantyPeriod      int    // Days.
+// RMAProcedure        string // ?
+// CreatedAt           time.Time
+// ChangedAt           time.Time
+// changed             bool
+// New                 bool
+// Removed             bool
+// }
+
+type Product struct {
+	Code, Brand, Category, Description  string
+	Multiple                            int
+	DealerPrice, SuggestionPrice        money.Money
+	TecnicalDescription                 string
+	Length, Width, heigh, Weight        int // millimeter and grams.
+	PictureLinks                        []string
+	WarrantyPeriod                      int    // Days.
+	RMAProcedure                        string // ?
+	CreatedAt, ChangedAt                time.Time
+	Availability, Changed, New, Removed bool
+}
+
 // Development mode.
 var devMode bool
 
@@ -74,7 +118,54 @@ var devMode bool
 var config configuration
 var categExc []string
 
+func init() {
+	// Log file.
+	logFile, err := os.OpenFile("./log/ws-aldo.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
+	if err != nil {
+		panic(err)
+	}
+	// Log configuration.
+	mw := io.MultiWriter(os.Stdout, logFile)
+	log.SetOutput(mw)
+	log.SetFlags(log.Ldate | log.Lmicroseconds | log.Lshortfile)
+	// log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
+	// log.SetFlags(log.LstdFlags | log.Ldate | log.Lshortfile)
+	// log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+	// production or development mode
+	setMode()
+
+	// Configuration file.
+	file, err := os.Open("config.json")
+	defer file.Close()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// sbFile, _ := ioutil.ReadAll(file)
+	// log.Printf("%s", sbFile)
+	config = configuration{}
+	err = json.NewDecoder(file).Decode(&config)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	// fmt.Println("WsAldo: ", config.WsAldo)
+	// fmt.Println("User: ", config.WsAldo.User)
+	// fmt.Println("Password: ", config.WsAldo.Password)
+}
+
 func main() {
+	var err error
+
+	// Start data base.
+	db, err = sql.Open("sqlite3", "./db/aldo.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+	err = db.Ping()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// // Get products from last update.
 	// productsRead := new(AldoProducts)
@@ -154,41 +245,6 @@ func main() {
 	log.Printf("Finish.\n\n")
 }
 
-func init() {
-	// Log file.
-	logFile, err := os.OpenFile("./log/ws-aldo.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
-	if err != nil {
-		panic(err)
-	}
-	// Log configuration.
-	mw := io.MultiWriter(os.Stdout, logFile)
-	log.SetOutput(mw)
-	log.SetFlags(log.Ldate | log.Lmicroseconds | log.Lshortfile)
-	// log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
-	// log.SetFlags(log.LstdFlags | log.Ldate | log.Lshortfile)
-	// log.SetFlags(log.LstdFlags | log.Lmicroseconds)
-	// production or development mode
-	setMode()
-
-	// Configuration file.
-	file, err := os.Open("config.json")
-	defer file.Close()
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	// sbFile, _ := ioutil.ReadAll(file)
-	// log.Printf("%s", sbFile)
-	config = configuration{}
-	err = json.NewDecoder(file).Decode(&config)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	// fmt.Println("WsAldo: ", config.WsAldo)
-	// fmt.Println("User: ", config.WsAldo.User)
-	// fmt.Println("Password: ", config.WsAldo.Password)
-}
-
 /**************************************************************************************************
 * Statistics.
 **************************************************************************************************/
@@ -223,49 +279,69 @@ func (doc *xmlDoc) process() (err error) {
 			prodcutQtyCutByCategFilter++
 			continue
 		}
+		product := Product{}
 		// Categories.
-		category := xmlProduct.Category
+		product.Category = xmlProduct.Category
 		// List used categories.
-		elem, _ = mCategoryUsedQtd[category]
-		mCategoryUsedQtd[category] = elem + 1
+		elem, _ = mCategoryUsedQtd[product.Category]
+		mCategoryUsedQtd[product.Category] = elem + 1
 		//Price.
 		var err error
-		dealerPrice, err := money.Parse(xmlProduct.DealerPrice, ",")
+		product.DealerPrice, err = money.Parse(xmlProduct.DealerPrice, ",")
 		if err != nil {
 			log.Printf("Could not convert price, product code: %s, price: %s\n", xmlProduct.Code, xmlProduct.DealerPrice)
 			continue
 		}
 		// Filter max price.
-		if dealerPrice > config.FilterMaxPrice {
+		if product.DealerPrice > config.FilterMaxPrice {
 			prodcutQtyCutByMaxPrice++
 			continue
 		}
 		// Filter min price.
-		if dealerPrice < config.FilterMinPrice {
+		if product.DealerPrice < config.FilterMinPrice {
 			prodcutQtyCutByMinPrice++
 			continue
 		}
 
+		// Product will be used.
 		usedProductQtd++
 		// Code.
-		code := xmlProduct.Code
-
-		// Description.
-		// description := xmlProduct.Description
-
+		product.Code = xmlProduct.Code
 		// Brands.
-		// brand := xmlProduct.Brand
+		product.Brand = xmlProduct.Brand
+		// Description.
+		product.Description = xmlProduct.Description
+
+		dbProduct := Product{}
+		err = db.QueryRow(`SELECT code, brand, category, description, availability, changed_at FROM product WHERE code = ?`, product.Code).
+			Scan(&dbProduct.Code, &dbProduct.Brand, &dbProduct.Category, &dbProduct.Description, &dbProduct.Availability, &dbProduct.ChangedAt)
+		// New product.
+		if err == sql.ErrNoRows {
+			log.Println("Inserting:", product.Code)
+			// Save email confirmation.
+			stmt, err := db.Prepare(`INSERT INTO product(code, brand, category, description, availability, changed_at, created_at) VALUES(?, ?, ?, ?, ?, ?, ?)`)
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer stmt.Close()
+			_, err = stmt.Exec(product.Code, product.Brand, product.Category, product.Description, product.Availability, time.Now(), time.Now())
+			if err != nil {
+				log.Fatal(err)
+			}
+		} else if err != nil {
+			log.Fatal(err)
+		}
 
 		// fmt.Println("DealerPrice: ", product.DealerPrice)
 		// Max price.
-		if dealerPrice > maxPrice {
-			maxPrice = dealerPrice
+		if product.DealerPrice > maxPrice {
+			maxPrice = product.DealerPrice
 			// maxPriceCodeProduct = product.Code
 			// maxPriceDescriptionProduct = product.Description
 		}
 		// Min price.
-		if dealerPrice < minPrice {
-			minPrice = dealerPrice
+		if product.DealerPrice < minPrice {
+			minPrice = product.DealerPrice
 		}
 		// warrantyTime := 5
 		// RMAProcedure := "no-procedure"
@@ -275,9 +351,7 @@ func (doc *xmlDoc) process() (err error) {
 		// weight := 4
 
 		// Pric sum.
-		priceSum += dealerPrice
-
-		log.Printf("Product code: %s\n", code)
+		priceSum += product.DealerPrice
 
 		// fmt.Printf("[%s] - %s - R$%.2f\n", product.Category, product.Description, product.DealerPrice)
 		// log.Println(product.DealerPrice)
