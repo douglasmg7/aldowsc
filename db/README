@@ -1,0 +1,5 @@
+# create dev db.
+./create_dev_db
+
+# enable foreign key
+sqlite> pragma foreign_keys = on;

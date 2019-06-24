@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	// "encoding/gob"
+	"encoding/gob"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -13,11 +13,23 @@ import (
 	"os"
 	"sort"
 	"strings"
-	// "time"
+	"time"
 
 	"github.com/douglasmg7/money"
 	"golang.org/x/net/html/charset"
 )
+
+// "github.com/rogpeppe/go-charset/charset"
+// _ "github.com/rogpeppe/go-charset/data"
+
+// import (
+//     "encoding/xml"
+//     "golang.org/x/net/html/charset"
+// )
+
+// decoder := xml.NewDecoder(reader)
+// decoder.CharsetReader = charset.NewReaderLabel
+// err = decoder.Decode(&parsed)
 
 // Configuration file.
 type configuration struct {
@@ -67,12 +79,43 @@ type xmlProduct struct {
 	// Potencia          string `xml:"potencia,attr"`
 }
 
+type AldoProduct struct {
+	Code                string
+	Brand               string
+	Category            string
+	Description         string
+	Multiple            string
+	DealerPrice         money.Money
+	SuggestionPrice     money.Money
+	Weight              int // Peso(gr).
+	TecnicalDescription string
+	Availability        bool
+	Dimension           Dimension
+	PictureLinks        []string
+	WarrantyTime        string // Days.
+	RMAProcedure        string // ?
+	CreatedAt           time.Time
+	ChangedAt           time.Time
+	changed             bool
+	New                 bool
+	Removed             bool
+}
+
+type Dimension struct {
+	Length int // Comprimento(mm).
+	Width  int // Largura(mm).
+	Height int // Altura(mm).
+}
+
 // Development mode.
 var devMode bool
 
 // Configuration.
 var config configuration
 var categExc []string
+
+type AldoProducts []AldoProduct
+type AldoProductsMap map[string]AldoProduct
 
 func main() {
 
@@ -151,6 +194,56 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// aldoProductsMap := aldoXMLDoc.process()
+	fmt.Println("Products quantity processed from xml: ", len(aldoProductsMap))
+
+	// Deserialize last processed products.
+	var decodedProducts AldoProductsMap
+	err = readGob("data/products.gob", &decodedProducts)
+	// If error is other then not exist file.
+	if err != nil && !os.IsNotExist(err) {
+		log.Fatal(err)
+	}
+	fmt.Println("Qutatity after serialize: ", len(decodedProducts))
+	// fmt.Println(decodedProducts["36002-4"])
+
+	// Update and new products.
+	for k, v := range aldoProductsMap {
+		product, exist := decodedProducts[k]
+		// New.
+		if !exist {
+			log.Println("New product:", v.Code)
+			v.New = true
+			v.CreatedAt = time.Now()
+			v.ChangedAt = v.CreatedAt
+			continue
+		}
+		// Changed.
+		if v.Description != product.Description {
+			log.Println("Changed product:", v.Code)
+			v.changed = true
+			v.ChangedAt = time.Now()
+			continue
+		}
+		// Not changed.
+		v.CreatedAt = product.CreatedAt
+		v.ChangedAt = product.ChangedAt
+	}
+	// Removed products.
+	for k, v := range decodedProducts {
+		_, exist := aldoProductsMap[k]
+		if !exist {
+			log.Println("Removed product:", v.Code)
+			v.Removed = true
+		}
+	}
+
+	// Serialize products.
+	err = writeGob("data/products.gob", &aldoProductsMap)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	log.Printf("Finish.\n\n")
 }
 
@@ -214,11 +307,12 @@ func (doc *xmlDoc) process() (err error) {
 	var usedProductQtd int
 
 	for _, xmlProduct := range doc.Products {
-		totalProductQtd++
+		productQtd++
 		// List all categories.
 		elem, _ := mCategoryAllQtd[xmlProduct.Category]
 		mCategoryAllQtd[xmlProduct.Category] = elem + 1
 		// Filter by categories.
+		var product AldoProduct
 		if !isCategorieHabToBeUsed(xmlProduct.Category) {
 			prodcutQtyCutByCategFilter++
 			continue
@@ -226,8 +320,8 @@ func (doc *xmlDoc) process() (err error) {
 		// Categories.
 		category := xmlProduct.Category
 		// List used categories.
-		elem, _ = mCategoryUsedQtd[category]
-		mCategoryUsedQtd[category] = elem + 1
+		elem, _ = mCategoryUsedQtd[product.Category]
+		mCategoryUsedQtd[product.Category] = elem + 1
 		//Price.
 		var err error
 		dealerPrice, err := money.Parse(xmlProduct.DealerPrice, ",")
@@ -245,16 +339,12 @@ func (doc *xmlDoc) process() (err error) {
 			prodcutQtyCutByMinPrice++
 			continue
 		}
-
-		usedProductQtd++
 		// Code.
 		code := xmlProduct.Code
-
 		// Description.
-		// description := xmlProduct.Description
-
+		description := xmlProduct.Description
 		// Brands.
-		// brand := xmlProduct.Brand
+		brand := xmlProduct.Brand
 
 		// fmt.Println("DealerPrice: ", product.DealerPrice)
 		// Max price.
@@ -267,17 +357,15 @@ func (doc *xmlDoc) process() (err error) {
 		if dealerPrice < minPrice {
 			minPrice = dealerPrice
 		}
-		// warrantyTime := 5
-		// RMAProcedure := "no-procedure"
-		// lenght := 1
-		// Width := 2
-		// height := 3
-		// weight := 4
+		warrantyTime = 5
+		RMAProcedure = "no-procedure"
+		lenght := 1
+		Width := 2
+		height := 3
+		weight := 4
 
 		// Pric sum.
-		priceSum += dealerPrice
-
-		log.Printf("Product code: %s\n", code)
+		priceSum += product.DealerPrice
 
 		// fmt.Printf("[%s] - %s - R$%.2f\n", product.Category, product.Description, product.DealerPrice)
 		// log.Println(product.DealerPrice)
@@ -292,11 +380,11 @@ func (doc *xmlDoc) process() (err error) {
 	// log.Printf("Max price desc product: %s\n", maxPriceDescriptionProduct)
 	// log.Printf("Sum price: %f", priceSum)
 	// log.Printf("Average price: %.4f", averagePrice)
-	log.Printf("Products quantity: %d", totalProductQtd)
+	log.Printf("Products quantity: %d", len(totalProductQtd)
 	log.Printf("Products quantity cut by min price(%.2f): %d", config.FilterMinPrice, prodcutQtyCutByMinPrice)
 	log.Printf("Products quantity cut by max price(%.2f): %d", config.FilterMaxPrice, prodcutQtyCutByMaxPrice)
 	log.Printf("Products quantity cut by categories filter: %d", prodcutQtyCutByCategFilter)
-	log.Printf("Product used quantity: %d", usedProductQtd)
+	log.Printf("Product used quantity: %d", len(usedProductQtd))
 	log.Printf("All  Categories quantity: %d", len(mCategoryAllQtd))
 	log.Printf("Used Categories quantity: %d", len(mCategoryUsedQtd))
 	writeList(&mCategoryUsedQtd, "list/categUse.list")
@@ -304,39 +392,140 @@ func (doc *xmlDoc) process() (err error) {
 	return err
 }
 
+// process create a map of products aldo from xml file format.
+func (doc *xmlDoc) process_old() (productsMap AldoProductsMap) {
+	productsMap = map[string]AldoProduct{}
+	// Price.
+	var minPrice money.Money
+	minPrice = math.MaxFloat32
+	var maxPrice money.Money
+	// var maxPriceCodeProduct string
+	// var maxPriceDescriptionProduct string
+	var priceSum money.Money
+	var prodcutQtyCutByMaxPrice int
+	var prodcutQtyCutByMinPrice int
+	var prodcutQtyCutByCategFilter int
+	mCategoryAllQtd := map[string]int{}
+	mCategoryUsedQtd := map[string]int{}
+	// var brand map[string]int
+	// List of categories to get.
+	// var available int
+	for _, xmlProduct := range doc.Products {
+		// List all categories.
+		elem, _ := mCategoryAllQtd[xmlProduct.Category]
+		mCategoryAllQtd[xmlProduct.Category] = elem + 1
+		// Filter by categories.
+		var product AldoProduct
+		if !isCategorieHabToBeUsed(xmlProduct.Category) {
+			prodcutQtyCutByCategFilter++
+			continue
+		}
+		// Categories.
+		product.Category = xmlProduct.Category
+		// List used categories.
+		elem, _ = mCategoryUsedQtd[product.Category]
+		mCategoryUsedQtd[product.Category] = elem + 1
+		//Price.
+		var err error
+		product.DealerPrice, err = money.Parse(xmlProduct.DealerPrice, ",")
+		if err != nil {
+			log.Printf("Could not convert price, product code: %s, price: %s\n", xmlProduct.Code, xmlProduct.DealerPrice)
+			continue
+		}
+		// Filter max price.
+		if product.DealerPrice > config.FilterMaxPrice {
+			prodcutQtyCutByMaxPrice++
+			continue
+		}
+		// Filter min price.
+		if product.DealerPrice < config.FilterMinPrice {
+			prodcutQtyCutByMinPrice++
+			continue
+		}
+		// Code.
+		product.Code = xmlProduct.Code
+		// Description.
+		product.Description = xmlProduct.Description
+		// Brands.
+		product.Brand = xmlProduct.Brand
+
+		// fmt.Println("DealerPrice: ", product.DealerPrice)
+		// Max price.
+		if product.DealerPrice > maxPrice {
+			maxPrice = product.DealerPrice
+			// maxPriceCodeProduct = product.Code
+			// maxPriceDescriptionProduct = product.Description
+		}
+		// Min price.
+		if product.DealerPrice < minPrice {
+			minPrice = product.DealerPrice
+		}
+		product.WarrantyTime = "4 dias"
+		product.RMAProcedure = "no-procedure"
+		product.Dimension = Dimension{}
+
+		productsMap[product.Code] = product
+		// Pric sum.
+		priceSum += product.DealerPrice
+
+		// fmt.Printf("[%s] - %s - R$%.2f\n", product.Category, product.Description, product.DealerPrice)
+		// log.Println(product.DealerPrice)
+		// log.Println()
+	}
+	// Average price.
+	// averagePrice := priceSum.Divide(len(products))
+
+	// log.Printf("Min price: %.2f\n", minPrice)
+	// log.Printf("Max price: %.2f\n", maxPrice)
+	// log.Printf("Max price code product: %s\n", maxPriceCodeProduct)
+	// log.Printf("Max price desc product: %s\n", maxPriceDescriptionProduct)
+	// log.Printf("Sum price: %f", priceSum)
+	// log.Printf("Average price: %.4f", averagePrice)
+	log.Printf("Products quantity: %d", len(doc.Products))
+	log.Printf("Products quantity cut by min price(%.2f): %d", config.FilterMinPrice, prodcutQtyCutByMinPrice)
+	log.Printf("Products quantity cut by max price(%.2f): %d", config.FilterMaxPrice, prodcutQtyCutByMaxPrice)
+	log.Printf("Products quantity cut by categories filter: %d", prodcutQtyCutByCategFilter)
+	log.Printf("Product used quantity: %d", len(productsMap))
+	log.Printf("All  Categories quantity: %d", len(mCategoryAllQtd))
+	log.Printf("Used Categories quantity: %d", len(mCategoryUsedQtd))
+	writeList(&mCategoryUsedQtd, "list/categUse.list")
+	writeList(&mCategoryAllQtd, "list/categAll.list")
+	return productsMap
+}
+
 /**************************************************************************************************
 * Encode / decode.
 **************************************************************************************************/
-// // writeGob encode to a binary file.
-// func writeGob(filePath string, data *AldoProductsMap) error {
-// file, err := os.Create(filePath)
-// defer file.Close()
-// if err == nil {
-// encoder := gob.NewEncoder(file)
-// err = encoder.Encode(*data)
-// }
-// return err
-// }
+// writeGob encode to a binary file.
+func writeGob(filePath string, data *AldoProductsMap) error {
+	file, err := os.Create(filePath)
+	defer file.Close()
+	if err == nil {
+		encoder := gob.NewEncoder(file)
+		err = encoder.Encode(*data)
+	}
+	return err
+}
 
-// // readGob decode from binary file.
-// func readGob(filePath string, data *AldoProductsMap) error {
-// file, err := os.Open(filePath)
-// defer file.Close()
-// if err == nil {
-// decoder := gob.NewDecoder(file)
-// for {
-// err = decoder.Decode(data)
-// if err == io.EOF {
-// return nil
-// // break
-// }
-// if err != nil {
-// return err
-// }
-// }
-// }
-// return err
-// }
+// readGob decode from binary file.
+func readGob(filePath string, data *AldoProductsMap) error {
+	file, err := os.Open(filePath)
+	defer file.Close()
+	if err == nil {
+		decoder := gob.NewDecoder(file)
+		for {
+			err = decoder.Decode(data)
+			if err == io.EOF {
+				return nil
+				// break
+			}
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return err
+}
 
 /**************************************************************************************************
 * Util.
