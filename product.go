@@ -7,27 +7,27 @@ import (
 )
 
 type Product struct {
-	Code                string
-	Brand               string
-	Category            string
-	Description         string
-	Multiple            int
-	DealerPrice         money.Money
-	SuggestionPrice     money.Money
-	TecnicalDescription string
-	Availability        bool
-	Length              int // mm.
-	Width               int // mm.
-	Height              int // mm.
-	Weight              int // grams.
-	PictureLinks        string
-	WarrantyPeriod      int    // Days.
-	RMAProcedure        string // ?
-	CreatedAt           time.Time
-	ChangedAt           time.Time
-	Changed             bool
-	New                 bool
-	Removed             bool
+	Code                 string
+	Brand                string
+	Category             string
+	Description          string
+	Multiple             int
+	DealerPrice          money.Money
+	SuggestionPrice      money.Money
+	TechnicalDescription string
+	Availability         bool
+	Length               int // mm.
+	Width                int // mm.
+	Height               int // mm.
+	Weight               int // grams.
+	PictureLinks         string
+	WarrantyPeriod       int    // Days.
+	RMAProcedure         string // ?
+	CreatedAt            time.Time
+	ChangedAt            time.Time
+	Changed              bool
+	New                  bool
+	Removed              bool
 }
 
 func (p *Product) Find(Id string) error {
@@ -40,7 +40,7 @@ func (p *Product) Find(Id string) error {
 			multiple,
 			dealer_price,
 			suggestion_price,
-			tecnical_description,
+			technical_description,
 			availability, 
 			length,
 			width,
@@ -66,7 +66,7 @@ func (p *Product) Find(Id string) error {
 			&p.Multiple,
 			&p.DealerPrice,
 			&p.SuggestionPrice,
-			&p.TecnicalDescription,
+			&p.TechnicalDescription,
 			&p.Availability,
 			&p.Length,
 			&p.Width,
@@ -84,6 +84,7 @@ func (p *Product) Find(Id string) error {
 }
 
 func (p *Product) Save() error {
+	now := time.Now()
 	stmt, err := db.Prepare(`
 		INSERT INTO product(
 			code, 
@@ -93,7 +94,7 @@ func (p *Product) Save() error {
 			multiple,
 			dealer_price,
 			suggestion_price,
-			tecnical_description,
+			technical_description,
 			availability, 
 			length,
 			width,
@@ -120,7 +121,7 @@ func (p *Product) Save() error {
 		p.Multiple,
 		p.DealerPrice,
 		p.SuggestionPrice,
-		p.TecnicalDescription,
+		p.TechnicalDescription,
 		p.Availability,
 		p.Length,
 		p.Width,
@@ -129,8 +130,8 @@ func (p *Product) Save() error {
 		p.PictureLinks,
 		p.WarrantyPeriod,
 		p.RMAProcedure,
-		time.Now(),
-		time.Now(),
+		now,
+		now,
 		false,
 		true,
 		false)

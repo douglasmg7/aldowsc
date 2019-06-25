@@ -12,7 +12,7 @@ create table product (
   multiple              integer not null,
   dealer_price          real not null,
   suggestion_price      real not null,
-  tecnical_description  text not null,
+  technical_description  text not null,
   availability          boolean not null,
   length                integer not null, -- mm.
   width                 integer not null, -- mm.

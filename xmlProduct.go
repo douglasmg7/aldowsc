@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"log"
 	"math"
+	"strconv"
+	"strings"
 
 	"github.com/douglasmg7/money"
 )
@@ -17,10 +19,10 @@ type xmlProduct struct {
 	Multiplo    string `xml:"multiplo,attr"`
 	DealerPrice string `xml:"preco,attr"`
 	// Suggestion price to sell.
-	SuggestionPrice string `xml:"precoeup,attr"`
-	Weight          string `xml:"peso,attr"`
-	TecDesc         string `xml:"descricao_tecnica,attr"`
-	Availability    string `xml:"disponivel,attr"`
+	SuggestionPrice      string `xml:"precoeup,attr"`
+	Weight               string `xml:"peso,attr"`
+	TechnicalDescription string `xml:"descricao_tecnica,attr"`
+	Availability         string `xml:"disponivel,attr"`
 	// Ipi               string `xml:"ipi,attr"`
 	Measurements string `xml:"dimensoes,attr"`
 	// Abnt              string `xml:"abnt,attr"`
@@ -59,6 +61,7 @@ func (doc *xmlDoc) process() (err error) {
 	var prodcutQtyCutByMaxPrice int
 	var prodcutQtyCutByMinPrice int
 	var prodcutQtyCutByCategFilter int
+	var productQtyCutByError int
 	mCategoryAllQtd := map[string]int{}
 	mCategoryUsedQtd := map[string]int{}
 	// var brand map[string]int
@@ -94,7 +97,6 @@ func (doc *xmlDoc) process() (err error) {
 		}
 
 		// Suggestion price.
-		var err error
 		product.SuggestionPrice, err = money.Parse(xmlProduct.SuggestionPrice, ",")
 		if err != nil {
 			log.Printf("Could not convert suggestion price, product code: %s, price: %s\n", xmlProduct.Code, xmlProduct.SuggestionPrice)
@@ -112,38 +114,61 @@ func (doc *xmlDoc) process() (err error) {
 			continue
 		}
 
-		// Product will be used.
-		usedProductQtd++
 		// Code.
 		product.Code = xmlProduct.Code
 		// Brands.
 		product.Brand = xmlProduct.Brand
 		// Description.
 		product.Description = xmlProduct.Description
+		// Multiple.
+		multipleInt64, err := strconv.ParseInt(xmlProduct.Multiplo, 10, 0)
+		if err != nil {
+			log.Printf("Product code %s not imported (invalid multiple), err: %s", product.Code, err)
+			productQtyCutByError++
+			continue
+		}
+		product.Multiple = int(multipleInt64)
+		// Techincal description.
+		product.TechnicalDescription = xmlProduct.TechnicalDescription
+		// Availability.
+		if strings.ToLower(strings.TrimSpace(xmlProduct.Availability)) == "sim" {
+			product.Availability = true
+		}
+		// Weight, remove ".", change "," to "." and parse.
+		weightKg, err := strconv.ParseFloat(strings.Replace(strings.ReplaceAll(xmlProduct.Weight, ".", ""), ",", ".", 1), 64)
+		if err != nil {
+			log.Printf("Product code %s not imported (invalid weight), err: %s", product.Code, err)
+			productQtyCutByError++
+			continue
+		}
+		// Convert to grams.
+		product.Weight = int(weightKg * 1000)
 
 		product.Length = 1
 		product.Width = 2
 		product.Height = 3
-		product.Weight = 4
-		product.PictureLinks = "asdf"
+
+		// Picture.
+		product.PictureLinks = xmlProduct.PictureLinks
+
+		// Warrant.
 		product.WarrantyPeriod = 5
-		product.RMAProcedure = "no-procedure"
+		log.Printf("PictureLinks: %s", product.PictureLinks)
+		// RMA procedure.
+		product.RMAProcedure = xmlProduct.RMAProcedure
 
 		dbProduct := Product{}
 		err = dbProduct.Find(product.Code)
 		// New product.
 		if err == sql.ErrNoRows {
-			log.Println("Inserting:", product.Code)
+			// log.Println("Inserting:", product.Code)
 			err = product.Save()
 			if err != nil {
 				log.Fatal(err)
 			}
 		} else if err != nil {
 			log.Fatal(err)
-		} else {
-			log.Println("DealerPrice:", dbProduct.DealerPrice)
 		}
-
 		// fmt.Println("DealerPrice: ", product.DealerPrice)
 		// Max price.
 		if product.DealerPrice > maxPrice {
@@ -158,6 +183,8 @@ func (doc *xmlDoc) process() (err error) {
 
 		// Pric sum.
 		priceSum += product.DealerPrice
+		// Product will be used.
+		usedProductQtd++
 
 		// fmt.Printf("[%s] - %s - R$%.2f\n", product.Category, product.Description, product.DealerPrice)
 		// log.Println(product.DealerPrice)
@@ -176,6 +203,7 @@ func (doc *xmlDoc) process() (err error) {
 	log.Printf("Products quantity cut by min price(%.2f): %d", config.FilterMinPrice, prodcutQtyCutByMinPrice)
 	log.Printf("Products quantity cut by max price(%.2f): %d", config.FilterMaxPrice, prodcutQtyCutByMaxPrice)
 	log.Printf("Products quantity cut by categories filter: %d", prodcutQtyCutByCategFilter)
+	log.Printf("Products quantity cut by error: %d", productQtyCutByError)
 	log.Printf("Product used quantity: %d", usedProductQtd)
 	log.Printf("All  Categories quantity: %d", len(mCategoryAllQtd))
 	log.Printf("Used Categories quantity: %d", len(mCategoryUsedQtd))
