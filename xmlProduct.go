@@ -16,7 +16,7 @@ type xmlProduct struct {
 	Brand       string `xml:"marca,attr"`
 	Category    string `xml:"categoria,attr"`
 	Description string `xml:"descricao,attr"`
-	// Unidade           string `xml:"unidade,attr"`
+	Unit        string `xml:"unidade,attr"`
 	Multiplo    string `xml:"multiplo,attr"`
 	DealerPrice string `xml:"preco,attr"`
 	// Suggestion price to sell.
@@ -117,11 +117,17 @@ func (doc *xmlDoc) process() (err error) {
 
 		// Code.
 		product.Code = xmlProduct.Code
+
 		// Brands.
 		product.Brand = xmlProduct.Brand
+
 		// Description.
 		product.Description = xmlProduct.Description
-		// Multiple.
+
+		// Unit.
+		product.Unit = xmlProduct.Unit
+
+		// Multiple (multiple of unit).
 		multipleInt64, err := strconv.ParseInt(xmlProduct.Multiplo, 10, 0)
 		if err != nil {
 			log.Printf("Product with code %s not imported (invalid multiple), err: %s", product.Code, err)
@@ -129,8 +135,10 @@ func (doc *xmlDoc) process() (err error) {
 			continue
 		}
 		product.Multiple = int(multipleInt64)
+
 		// Techincal description.
 		product.TechnicalDescription = xmlProduct.TechnicalDescription
+
 		// Availability.
 		if strings.ToLower(strings.TrimSpace(xmlProduct.Availability)) == "sim" {
 			product.Availability = true
@@ -187,8 +195,15 @@ func (doc *xmlDoc) process() (err error) {
 		product.PictureLink = xmlProduct.PictureLink
 
 		// Warrant.
-		product.WarrantyPeriod = 5
-		log.Printf("PictureLink: %s", product.PictureLink)
+		re = regexp.MustCompile(`\d+`)
+		warrantTime64, err := strconv.ParseInt(re.FindAllString(xmlProduct.WarrantyTime, 1)[0], 10, 0)
+		product.WarrantyPeriod = int(warrantTime64)
+		if err != nil {
+			log.Printf("Product with code %s not imported (invalid warranty time), err: %s", product.Code, err)
+			productQtyCutByError++
+			continue
+		}
+
 		// RMA procedure.
 		product.RMAProcedure = xmlProduct.RMAProcedure
 

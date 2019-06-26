@@ -11,6 +11,7 @@ type Product struct {
 	Brand                string
 	Category             string
 	Description          string
+	Unit                 string
 	Multiple             int
 	DealerPrice          money.Money
 	SuggestionPrice      money.Money
@@ -37,6 +38,7 @@ func (p *Product) Find(Id string) error {
 			brand, 
 			category, 
 			description, 
+			unit,
 			multiple,
 			dealer_price,
 			suggestion_price,
@@ -63,6 +65,7 @@ func (p *Product) Find(Id string) error {
 			&p.Brand,
 			&p.Category,
 			&p.Description,
+			&p.Unit,
 			&p.Multiple,
 			&p.DealerPrice,
 			&p.SuggestionPrice,
@@ -91,6 +94,7 @@ func (p *Product) Save() error {
 			brand, 
 			category, 
 			description, 
+			unit,
 			multiple,
 			dealer_price,
 			suggestion_price,
@@ -108,7 +112,7 @@ func (p *Product) Save() error {
 			changed,
 			new,
 			removed
-		) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+		) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
 	if err != nil {
 		return err
 	}
@@ -118,6 +122,7 @@ func (p *Product) Save() error {
 		p.Brand,
 		p.Category,
 		p.Description,
+		p.Unit,
 		p.Multiple,
 		p.DealerPrice,
 		p.SuggestionPrice,
