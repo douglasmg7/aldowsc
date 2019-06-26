@@ -18,7 +18,7 @@ create table product (
   width                 integer not null, -- mm.
   height                integer not null, -- mm.
   weight                integer not null, -- gr.
-  picture_links         blob,
+  picture_link          blob,
   warranty_period       integer,  -- Days.
   rma_procedure         text,
   created_at            date not null,

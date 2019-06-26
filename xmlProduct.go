@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"math"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -36,7 +37,7 @@ type xmlProduct struct {
 	// Reducao           string `xml:"reducao,attr"`
 	// Precocomst        string `xml:"precocomst,attr"`
 	// Produtocomst      string `xml:"produtocomst,attr"`
-	PictureLinks string `xml:"foto,attr"`
+	PictureLink string `xml:"foto,attr"`
 	// DescricaoAmigavel string `xml:"descricao_amigavel,attr"`
 	// CategoriaTi       string `xml:"categoria_ti,attr"`
 	WarrantyTime string `xml:"tempo_garantia,attr"`
@@ -123,7 +124,7 @@ func (doc *xmlDoc) process() (err error) {
 		// Multiple.
 		multipleInt64, err := strconv.ParseInt(xmlProduct.Multiplo, 10, 0)
 		if err != nil {
-			log.Printf("Product code %s not imported (invalid multiple), err: %s", product.Code, err)
+			log.Printf("Product with code %s not imported (invalid multiple), err: %s", product.Code, err)
 			productQtyCutByError++
 			continue
 		}
@@ -137,23 +138,57 @@ func (doc *xmlDoc) process() (err error) {
 		// Weight, remove ".", change "," to "." and parse.
 		weightKg, err := strconv.ParseFloat(strings.Replace(strings.ReplaceAll(xmlProduct.Weight, ".", ""), ",", ".", 1), 64)
 		if err != nil {
-			log.Printf("Product code %s not imported (invalid weight), err: %s", product.Code, err)
+			log.Printf("Product with code %s not imported (invalid weight), err: %s", product.Code, err)
 			productQtyCutByError++
 			continue
 		}
 		// Convert to grams.
 		product.Weight = int(weightKg * 1000)
 
-		product.Length = 1
-		product.Width = 2
-		product.Height = 3
+		// Get length, width and height.
+		re := regexp.MustCompile(`\d*\.?\d+`)
+		dims := re.FindAllString(xmlProduct.Measurements, 3)
+
+		// Not have all dimensions.
+		if len(dims) != 3 {
+			log.Printf("Product with code %s not imported (invalid dimensions), err: %s", product.Code, "Not have all dimensions")
+			productQtyCutByError++
+			continue
+		}
+
+		// Height.
+		heightCm, err := strconv.ParseFloat(dims[0], 64)
+		if err != nil {
+			log.Printf("Product with code %s not imported (invalid height), err: %s", product.Code, err)
+			productQtyCutByError++
+			continue
+		}
+		product.Height = int(heightCm * 10)
+
+		// Width.
+		widthCm, err := strconv.ParseFloat(dims[1], 64)
+		if err != nil {
+			log.Printf("Product with code %s not imported (invalid width), err: %s", product.Code, err)
+			productQtyCutByError++
+			continue
+		}
+		product.Width = int(widthCm * 10)
+
+		// Length.
+		lengthCm, err := strconv.ParseFloat(dims[2], 64)
+		if err != nil {
+			log.Printf("Product with code %s not imported (invalid length), err: %s", product.Code, err)
+			productQtyCutByError++
+			continue
+		}
+		product.Length = int(lengthCm * 10)
 
 		// Picture.
-		product.PictureLinks = xmlProduct.PictureLinks
+		product.PictureLink = xmlProduct.PictureLink
 
 		// Warrant.
 		product.WarrantyPeriod = 5
-		log.Printf("PictureLinks: %s", product.PictureLinks)
+		log.Printf("PictureLink: %s", product.PictureLink)
 		// RMA procedure.
 		product.RMAProcedure = xmlProduct.RMAProcedure
 

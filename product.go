@@ -20,7 +20,7 @@ type Product struct {
 	Width                int // mm.
 	Height               int // mm.
 	Weight               int // grams.
-	PictureLinks         string
+	PictureLink          string
 	WarrantyPeriod       int    // Days.
 	RMAProcedure         string // ?
 	CreatedAt            time.Time
@@ -46,7 +46,7 @@ func (p *Product) Find(Id string) error {
 			width,
 			height,
 			weight,
-			picture_links,
+			picture_link,
 			warranty_period,
 			rma_procedure,
 			created_at,
@@ -72,7 +72,7 @@ func (p *Product) Find(Id string) error {
 			&p.Width,
 			&p.Height,
 			&p.Weight,
-			&p.PictureLinks,
+			&p.PictureLink,
 			&p.WarrantyPeriod,
 			&p.RMAProcedure,
 			&p.CreatedAt,
@@ -100,7 +100,7 @@ func (p *Product) Save() error {
 			width,
 			height,
 			weight,
-			picture_links,
+			picture_link,
 			warranty_period,
 			rma_procedure,
 			created_at,
@@ -127,7 +127,7 @@ func (p *Product) Save() error {
 		p.Width,
 		p.Height,
 		p.Weight,
-		p.PictureLinks,
+		p.PictureLink,
 		p.WarrantyPeriod,
 		p.RMAProcedure,
 		now,
