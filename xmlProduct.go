@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/douglasmg7/money"
 )
@@ -207,17 +208,25 @@ func (doc *xmlDoc) process() (err error) {
 		// RMA procedure.
 		product.RMAProcedure = xmlProduct.RMAProcedure
 
+		// Get product from db.
 		dbProduct := Product{}
 		err = dbProduct.Find(product.Code)
 		// New product.
 		if err == sql.ErrNoRows {
 			// log.Println("Inserting:", product.Code)
+			product.New = true
+			product.CreatedAt = time.Now()
+			product.ChangedAt = product.CreatedAt
 			err = product.Save()
 			if err != nil {
 				log.Fatal(err)
 			}
 		} else if err != nil {
 			log.Fatal(err)
+		}
+		// Product changed.
+		if !product.Equal(&dbProduct) {
+
 		}
 		// fmt.Println("DealerPrice: ", product.DealerPrice)
 		// Max price.
