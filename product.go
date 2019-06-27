@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"reflect"
@@ -32,10 +33,10 @@ type Product struct {
 	ChangedAt            time.Time   `db:"changed_at"`
 	Changed              bool        `db:"changed"`
 	New                  bool        `db:"new"`
-	Removed              bool        `db:"remove`
+	Removed              bool        `db:"removed"`
 }
 
-func init() {
+func init_() {
 	p := Product{}
 	var fieldsName []string
 	var fieldsNameDb []string
@@ -48,22 +49,58 @@ func init() {
 		// fmt.Println(fieldType.Name)
 		fieldsNameDb = append(fieldsNameDb, fieldType.Tag.Get("db"))
 		// fmt.Println(fieldType.Tag.Get("db"))
-		if i == 0 {
-			// v := val.Field(i).Addr().Interface().(*string)
 
-			// v := val.Field(i).Addr().Interface()
-			// *(v.(*string)) = "asdf"
+		// v := val.Field(i).Addr().Interface().(*string)
 
-			fieldsInterface = append(fieldsInterface, val.Field(i).Addr().Interface())
+		// v := val.Field(i).Addr().Interface()
+		// *(v.(*string)) = "asdf"
 
-		}
+		fieldsInterface = append(fieldsInterface, val.Field(i).Addr().Interface())
 	}
-	// var buffer bytes.Buffer
-	// buffer.WriteString("INSERT ")
-	fmt.Println(strings.Join(fieldsName, ", "))
-	fmt.Println(fieldsNameDb)
-	log.Println(p)
+	var buffer bytes.Buffer
+	buffer.WriteString("SELECT ")
+	buffer.WriteString(strings.Join(fieldsNameDb, ", "))
+	buffer.WriteString(" FROM ")
+	buffer.WriteString("product ")
+	buffer.WriteString("WHERE code=?")
+	fmt.Println(buffer.String())
+	// fmt.Println(fieldsNameDb)
+	// log.Println(p)
 	log.Fatal("Fim")
+}
+
+func (p *Product) Find(Id string) error {
+	var fieldsName []string
+	var fieldsNameDb []string
+	var fieldsInterface []interface{}
+
+	val := reflect.ValueOf(p).Elem()
+	for i := 0; i < val.NumField(); i++ {
+		fieldType := val.Type().Field(i)
+		fieldsName = append(fieldsName, fieldType.Name)
+		// fmt.Println(fieldType.Name)
+		fieldsNameDb = append(fieldsNameDb, fieldType.Tag.Get("db"))
+		// fmt.Println(fieldType.Tag.Get("db"))
+
+		// v := val.Field(i).Addr().Interface().(*string)
+
+		// v := val.Field(i).Addr().Interface()
+		// *(v.(*string)) = "asdf"
+
+		fieldsInterface = append(fieldsInterface, val.Field(i).Addr().Interface())
+	}
+	var buffer bytes.Buffer
+	buffer.WriteString("SELECT ")
+	buffer.WriteString(strings.Join(fieldsNameDb, ", "))
+	buffer.WriteString(" FROM ")
+	buffer.WriteString("product ")
+	buffer.WriteString("WHERE code=?")
+	// fmt.Println(buffer.String())
+	// fmt.Println(fieldsNameDb)
+	// log.Println(p)
+
+	err := db.QueryRow(buffer.String(), Id).Scan(fieldsInterface...)
+	return err
 }
 
 // func init() {
@@ -83,7 +120,7 @@ func init() {
 // log.Fatal()
 // }
 
-func (p *Product) Find(Id string) error {
+func (p *Product) Find_old(Id string) error {
 	err := db.QueryRow(`
 		SELECT 
 			code, 
@@ -197,25 +234,57 @@ func (p *Product) Save() error {
 	return err
 }
 
-func (p *Product) Equal(pn *Product) bool {
-	if p.Code == pn.Code &&
-		p.Brand == pn.Brand &&
-		p.Category == pn.Category &&
-		p.Description == pn.Description &&
-		p.Unit == pn.Unit &&
-		p.Multiple == pn.Multiple &&
-		p.DealerPrice == pn.DealerPrice &&
-		p.SuggestionPrice == pn.SuggestionPrice &&
-		p.TechnicalDescription == pn.TechnicalDescription &&
-		p.Availability == pn.Availability &&
-		p.Length == pn.Length &&
-		p.Width == pn.Width &&
-		p.Height == pn.Height &&
-		p.Weight == pn.Weight &&
-		p.PictureLink == pn.PictureLink &&
-		p.WarrantyPeriod == pn.WarrantyPeriod &&
-		p.RMAProcedure == pn.RMAProcedure {
-		return false
+func (p *Product) Diff(pn *Product) bool {
+	if p.Code != pn.Code {
+		return true
 	}
-	return true
+	if p.Brand != pn.Brand {
+		return true
+	}
+	if p.Category != pn.Category {
+		return true
+	}
+	if p.Description != pn.Description {
+		return true
+	}
+	if p.Unit != pn.Unit {
+		return true
+	}
+	if p.Multiple != pn.Multiple {
+		return true
+	}
+	if p.DealerPrice != pn.DealerPrice {
+		return true
+	}
+	if p.SuggestionPrice != pn.SuggestionPrice {
+		return true
+	}
+	if p.TechnicalDescription != pn.TechnicalDescription {
+		return true
+	}
+	if p.Availability != pn.Availability {
+		return true
+	}
+	if p.Length != pn.Length {
+		return true
+	}
+	if p.Width != pn.Width {
+		return true
+	}
+	if p.Height != pn.Height {
+		return true
+	}
+	if p.Weight != pn.Weight {
+		return true
+	}
+	if p.PictureLink != pn.PictureLink {
+		return true
+	}
+	if p.WarrantyPeriod != pn.WarrantyPeriod {
+		return true
+	}
+	if p.RMAProcedure != pn.RMAProcedure {
+		return true
+	}
+	return false
 }

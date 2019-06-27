@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"math"
 	"regexp"
@@ -208,26 +209,6 @@ func (doc *xmlDoc) process() (err error) {
 		// RMA procedure.
 		product.RMAProcedure = xmlProduct.RMAProcedure
 
-		// Get product from db.
-		dbProduct := Product{}
-		err = dbProduct.Find(product.Code)
-		// New product.
-		if err == sql.ErrNoRows {
-			// log.Println("Inserting:", product.Code)
-			product.New = true
-			product.CreatedAt = time.Now()
-			product.ChangedAt = product.CreatedAt
-			err = product.Save()
-			if err != nil {
-				log.Fatal(err)
-			}
-		} else if err != nil {
-			log.Fatal(err)
-		}
-		// Product changed.
-		if !product.Equal(&dbProduct) {
-
-		}
 		// fmt.Println("DealerPrice: ", product.DealerPrice)
 		// Max price.
 		if product.DealerPrice > maxPrice {
@@ -235,6 +216,7 @@ func (doc *xmlDoc) process() (err error) {
 			// maxPriceCodeProduct = product.Code
 			// maxPriceDescriptionProduct = product.Description
 		}
+
 		// Min price.
 		if product.DealerPrice < minPrice {
 			minPrice = product.DealerPrice
@@ -245,9 +227,35 @@ func (doc *xmlDoc) process() (err error) {
 		// Product will be used.
 		usedProductQtd++
 
-		// fmt.Printf("[%s] - %s - R$%.2f\n", product.Category, product.Description, product.DealerPrice)
-		// log.Println(product.DealerPrice)
-		// log.Println()
+		// Get product from db.
+		dbProduct := Product{}
+		err = dbProduct.Find(product.Code)
+
+		// Error.
+		if err != nil && err != sql.ErrNoRows {
+			log.Fatal(err)
+		}
+
+		// New product.
+		if err == sql.ErrNoRows {
+			// log.Println("Inserting:", product.Code)
+			product.New = true
+			product.CreatedAt = time.Now()
+			product.ChangedAt = product.CreatedAt
+			fmt.Println("Inserte product:", product.Code)
+			err = product.Save()
+			if err != nil {
+				log.Fatal(err)
+			}
+			continue
+		}
+
+		// Product already exist.
+		fmt.Println("Product found on db:", dbProduct.Code)
+		// Product changed.
+		if product.Diff(&dbProduct) {
+			fmt.Println("Product changed", product.Code)
+		}
 	}
 	// Average price.
 	// averagePrice := priceSum.Divide(len(products))
