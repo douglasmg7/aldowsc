@@ -255,21 +255,22 @@ func (doc *xmlDoc) process() (err error) {
 
 		// Product changed.
 		if product.Diff(&dbProduct) {
-			fmt.Println("product change:", dbProduct.Changed)
-			fmt.Println("product CreatedAt:", dbProduct.CreatedAt)
-			fmt.Println("product ChangedAt:", dbProduct.ChangedAt)
+			fmt.Println("productDb change:", dbProduct.Changed)
+			fmt.Println("productDb CreatedAt:", dbProduct.CreatedAt)
+			fmt.Println("productDb ChangedAt:", dbProduct.ChangedAt)
 			// Save product history.
-			dbProduct.SaveHistory()
+			err = dbProduct.SaveHistory()
 			if err != nil {
 				log.Fatal(err)
 			}
 			// Update changed product.
-			// product.Changed = true
-			// product.ChangedAt = time.Now()
-			// product.Update()
-			// if err != nil {
-			// log.Fatal(err)
-			// }
+			product.Changed = true
+			product.CreatedAt = dbProduct.CreatedAt
+			product.ChangedAt = time.Now()
+			err = product.Update()
+			if err != nil {
+				log.Fatal(err)
+			}
 			fmt.Println("Product changed", product.Code)
 		}
 	}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"reflect"
 	"strings"
 	"time"
@@ -116,9 +117,45 @@ func (p *Product) save(history bool) error {
 	}
 	defer stmt.Close()
 	_, err = stmt.Exec(fieldsInterface...)
-	if err != nil {
-		return err
+	return err
+}
+
+// Update product from db.
+func (p *Product) Update() error {
+	return p.update(false)
+}
+
+// UpdateHistory update product history db.
+func (p *Product) UpdateHistory() error {
+	return p.update(true)
+}
+
+// Update product or product history db.
+func (p *Product) update(history bool) error {
+	var fieldsNameSet []string
+	// var fieldsNameDb []string
+	var fieldsInterface []interface{}
+	// Table name.
+	var tableName = "product"
+	if history {
+		tableName = "product_history"
 	}
+
+	val := reflect.ValueOf(p).Elem()
+	// Start from 1, to not update code.
+	for i := 1; i < val.NumField(); i++ {
+		fieldType := val.Type().Field(i)
+		// fieldsName = append(fieldsName, fieldType.Name)
+		fieldsNameSet = append(fieldsNameSet, fieldType.Tag.Get("db")+"=?")
+		fieldsInterface = append(fieldsInterface, val.Field(i).Addr().Interface())
+	}
+	fieldsInterface = append(fieldsInterface, p.Code)
+
+	query := "UPDATE " + tableName + " SET " + strings.Join(fieldsNameSet, ", ") + " WHERE code=?"
+	// fmt.Println(query)
+	fmt.Println("brand:", p.Brand)
+
+	_, err := db.Exec(query, fieldsInterface...)
 	return err
 }
 
