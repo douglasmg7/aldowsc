@@ -54,5 +54,5 @@ create table product_history (
     changed                 BOOLEAN NOT NULL,
     new                     BOOLEAN NOT NULL,
     removed                 BOOLEAN NOT NULL,
-    PRIMARY KEY (code, created_at)
+    PRIMARY KEY (code, changed_at)
 );

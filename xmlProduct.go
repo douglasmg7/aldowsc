@@ -251,9 +251,25 @@ func (doc *xmlDoc) process() (err error) {
 		}
 
 		// Product already exist.
-		fmt.Println("Product found on db:", dbProduct.Code)
+		// fmt.Println("Product found on db:", dbProduct.Code)
+
 		// Product changed.
 		if product.Diff(&dbProduct) {
+			fmt.Println("product change:", dbProduct.Changed)
+			fmt.Println("product CreatedAt:", dbProduct.CreatedAt)
+			fmt.Println("product ChangedAt:", dbProduct.ChangedAt)
+			// Save product history.
+			dbProduct.SaveHistory()
+			if err != nil {
+				log.Fatal(err)
+			}
+			// Update changed product.
+			// product.Changed = true
+			// product.ChangedAt = time.Now()
+			// product.Update()
+			// if err != nil {
+			// log.Fatal(err)
+			// }
 			fmt.Println("Product changed", product.Code)
 		}
 	}
