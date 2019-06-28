@@ -171,40 +171,6 @@ func main() {
 }
 
 /**************************************************************************************************
-* Encode / decode.
-**************************************************************************************************/
-// // writeGob encode to a binary file.
-// func writeGob(filePath string, data *AldoProductsMap) error {
-// file, err := os.Create(filePath)
-// defer file.Close()
-// if err == nil {
-// encoder := gob.NewEncoder(file)
-// err = encoder.Encode(*data)
-// }
-// return err
-// }
-
-// // readGob decode from binary file.
-// func readGob(filePath string, data *AldoProductsMap) error {
-// file, err := os.Open(filePath)
-// defer file.Close()
-// if err == nil {
-// decoder := gob.NewDecoder(file)
-// for {
-// err = decoder.Decode(data)
-// if err == io.EOF {
-// return nil
-// // break
-// }
-// if err != nil {
-// return err
-// }
-// }
-// }
-// return err
-// }
-
-/**************************************************************************************************
 * Util.
 **************************************************************************************************/
 // readlist uppercase, remove spaces and create a list of lines.
