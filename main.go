@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"database/sql"
+	"time"
 
 	// "database/sql"
 	// "encoding/gob"
@@ -159,7 +160,9 @@ func main() {
 	// fmt.Println("Price: ", aldoXMLDoc.Products[1].Price)
 
 	categExc = readList("list/categExc.list")
+	timer := time.Now()
 	err = aldoXMLDoc.process()
+	fmt.Println("Time to run (s):", time.Since(timer).Seconds())
 	if err != nil {
 		log.Fatal(err)
 	}

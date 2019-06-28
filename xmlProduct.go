@@ -242,7 +242,7 @@ func (doc *xmlDoc) process() (err error) {
 			product.New = true
 			product.CreatedAt = time.Now()
 			product.ChangedAt = product.CreatedAt
-			fmt.Println("Inserte product:", product.Code)
+			// fmt.Println("Inserted product:", product.Code)
 			err = product.Save()
 			if err != nil {
 				log.Fatal(err)

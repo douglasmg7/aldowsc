@@ -2,8 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
-	"log"
 	"reflect"
 	"strings"
 	"time"
@@ -36,39 +34,6 @@ type Product struct {
 	Removed              bool        `db:"removed"`
 }
 
-func init_() {
-	p := Product{}
-	var fieldsName []string
-	var fieldsNameDb []string
-	var fieldsInterface []interface{}
-
-	val := reflect.ValueOf(&p).Elem()
-	for i := 0; i < val.NumField(); i++ {
-		fieldType := val.Type().Field(i)
-		fieldsName = append(fieldsName, fieldType.Name)
-		// fmt.Println(fieldType.Name)
-		fieldsNameDb = append(fieldsNameDb, fieldType.Tag.Get("db"))
-		// fmt.Println(fieldType.Tag.Get("db"))
-
-		// v := val.Field(i).Addr().Interface().(*string)
-
-		// v := val.Field(i).Addr().Interface()
-		// *(v.(*string)) = "asdf"
-
-		fieldsInterface = append(fieldsInterface, val.Field(i).Addr().Interface())
-	}
-	var buffer bytes.Buffer
-	buffer.WriteString("SELECT ")
-	buffer.WriteString(strings.Join(fieldsNameDb, ", "))
-	buffer.WriteString(" FROM ")
-	buffer.WriteString("product ")
-	buffer.WriteString("WHERE code=?")
-	fmt.Println(buffer.String())
-	// fmt.Println(fieldsNameDb)
-	// log.Println(p)
-	log.Fatal("Fim")
-}
-
 func (p *Product) Find(Id string) error {
 	var fieldsName []string
 	var fieldsNameDb []string
@@ -78,15 +43,7 @@ func (p *Product) Find(Id string) error {
 	for i := 0; i < val.NumField(); i++ {
 		fieldType := val.Type().Field(i)
 		fieldsName = append(fieldsName, fieldType.Name)
-		// fmt.Println(fieldType.Name)
 		fieldsNameDb = append(fieldsNameDb, fieldType.Tag.Get("db"))
-		// fmt.Println(fieldType.Tag.Get("db"))
-
-		// v := val.Field(i).Addr().Interface().(*string)
-
-		// v := val.Field(i).Addr().Interface()
-		// *(v.(*string)) = "asdf"
-
 		fieldsInterface = append(fieldsInterface, val.Field(i).Addr().Interface())
 	}
 	var buffer bytes.Buffer
@@ -95,139 +52,38 @@ func (p *Product) Find(Id string) error {
 	buffer.WriteString(" FROM ")
 	buffer.WriteString("product ")
 	buffer.WriteString("WHERE code=?")
-	// fmt.Println(buffer.String())
-	// fmt.Println(fieldsNameDb)
-	// log.Println(p)
 
 	err := db.QueryRow(buffer.String(), Id).Scan(fieldsInterface...)
 	return err
 }
 
-// func init() {
-// p := Product{}
-// val := reflect.ValueOf(&p).Elem()
-// for i := 0; i < val.NumField(); i++ {
-// fieldType := val.Type().Field(i)
-// fmt.Println(fieldType.Name)
-// fmt.Println(fieldType.Tag.Get("db"))
-// if i == 0 {
-// // v := val.Field(i).Addr().Interface().(*string)
-// v := val.Field(i).Addr().Interface()
-// *(v.(*string)) = "asdf"
-// }
-// }
-// log.Println(p)
-// log.Fatal()
-// }
-
-func (p *Product) Find_old(Id string) error {
-	err := db.QueryRow(`
-		SELECT 
-			code, 
-			brand, 
-			category, 
-			description, 
-			unit,
-			multiple,
-			dealer_price,
-			suggestion_price,
-			technical_description,
-			availability, 
-			length,
-			width,
-			height,
-			weight,
-			picture_link,
-			warranty_period,
-			rma_procedure,
-			created_at,
-			changed_at,
-			changed,
-			new,
-			removed
-		FROM 
-			product 
-		WHERE 
-			code = ?`, Id).
-		Scan(
-			&p.Code,
-			&p.Brand,
-			&p.Category,
-			&p.Description,
-			&p.Unit,
-			&p.Multiple,
-			&p.DealerPrice,
-			&p.SuggestionPrice,
-			&p.TechnicalDescription,
-			&p.Availability,
-			&p.Length,
-			&p.Width,
-			&p.Height,
-			&p.Weight,
-			&p.PictureLink,
-			&p.WarrantyPeriod,
-			&p.RMAProcedure,
-			&p.CreatedAt,
-			&p.ChangedAt,
-			&p.Changed,
-			&p.New,
-			&p.Removed)
-	return err
-}
-
 func (p *Product) Save() error {
-	stmt, err := db.Prepare(`
-		INSERT INTO product(
-			code, 
-			brand, 
-			category, 
-			description, 
-			unit,
-			multiple,
-			dealer_price,
-			suggestion_price,
-			technical_description,
-			availability, 
-			length,
-			width,
-			height,
-			weight,
-			picture_link,
-			warranty_period,
-			rma_procedure,
-			created_at,
-			changed_at,
-			changed,
-			new,
-			removed
-		) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+	var fieldsName []string
+	var fieldsNameDb []string
+	var fieldsInterface []interface{}
+
+	val := reflect.ValueOf(p).Elem()
+	for i := 0; i < val.NumField(); i++ {
+		fieldType := val.Type().Field(i)
+		fieldsName = append(fieldsName, fieldType.Name)
+		fieldsNameDb = append(fieldsNameDb, fieldType.Tag.Get("db"))
+		fieldsInterface = append(fieldsInterface, val.Field(i).Addr().Interface())
+	}
+	var buffer bytes.Buffer
+	buffer.WriteString("INSERT INTO ")
+	buffer.WriteString("product ")
+	buffer.WriteString(`(`)
+	buffer.WriteString(strings.Join(fieldsNameDb, ", "))
+	buffer.WriteString(`) VALUES(?`)
+	buffer.WriteString(strings.Repeat(`, ?`, len(fieldsNameDb)-1))
+	buffer.WriteString(`)`)
+
+	stmt, err := db.Prepare(buffer.String())
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
-	_, err = stmt.Exec(
-		p.Code,
-		p.Brand,
-		p.Category,
-		p.Description,
-		p.Unit,
-		p.Multiple,
-		p.DealerPrice,
-		p.SuggestionPrice,
-		p.TechnicalDescription,
-		p.Availability,
-		p.Length,
-		p.Width,
-		p.Height,
-		p.Weight,
-		p.PictureLink,
-		p.WarrantyPeriod,
-		p.RMAProcedure,
-		p.CreatedAt,
-		p.ChangedAt,
-		p.Changed,
-		p.New,
-		p.Removed)
+	_, err = stmt.Exec(fieldsInterface...)
 	if err != nil {
 		return err
 	}
