@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"reflect"
 	"strings"
 	"time"
@@ -11,6 +10,7 @@ import (
 )
 
 type Product struct {
+	Id                   int         `db:"id"`
 	Code                 string      `db:"code"`
 	Brand                string      `db:"brand"`
 	Category             string      `db:"category"`
@@ -35,18 +35,18 @@ type Product struct {
 	Removed              bool        `db:"removed"`
 }
 
-// Find get product from db.
-func (p *Product) Find(id string) error {
-	return p.find(id, false)
+// FindByCode get product from db by code.
+func (p *Product) FindByCode(code string) error {
+	return p.findByCode(code, false)
 }
 
-// FindHistory get product history from db.
-func (p *Product) FindHistory(id string) error {
-	return p.find(id, true)
+// FindHistoryByCode get product history from db by code.
+func (p *Product) FindHistoryByCode(code string) error {
+	return p.findByCode(code, true)
 }
 
-// Find get product or product history from db.
-func (p *Product) find(id string, history bool) error {
+// findByCode get product or product history from db by code.
+func (p *Product) findByCode(code string, history bool) error {
 	var fieldsName []string
 	var fieldsNameDb []string
 	var fieldsInterface []interface{}
@@ -70,7 +70,7 @@ func (p *Product) find(id string, history bool) error {
 	buffer.WriteString(tableName)
 	buffer.WriteString(" WHERE code=?")
 
-	err := db.QueryRow(buffer.String(), id).Scan(fieldsInterface...)
+	err := db.QueryRow(buffer.String(), code).Scan(fieldsInterface...)
 	return err
 }
 
@@ -96,7 +96,8 @@ func (p *Product) save(history bool) error {
 	}
 
 	val := reflect.ValueOf(p).Elem()
-	for i := 0; i < val.NumField(); i++ {
+	// i=1, let db generate id.
+	for i := 1; i < val.NumField(); i++ {
 		fieldType := val.Type().Field(i)
 		fieldsName = append(fieldsName, fieldType.Name)
 		fieldsNameDb = append(fieldsNameDb, fieldType.Tag.Get("db"))
@@ -142,18 +143,18 @@ func (p *Product) update(history bool) error {
 	}
 
 	val := reflect.ValueOf(p).Elem()
-	// Start from 1, to not update code.
+	// i=1, to not update id.
 	for i := 1; i < val.NumField(); i++ {
 		fieldType := val.Type().Field(i)
 		// fieldsName = append(fieldsName, fieldType.Name)
 		fieldsNameSet = append(fieldsNameSet, fieldType.Tag.Get("db")+"=?")
 		fieldsInterface = append(fieldsInterface, val.Field(i).Addr().Interface())
 	}
-	fieldsInterface = append(fieldsInterface, p.Code)
+	fieldsInterface = append(fieldsInterface, p.Id)
 
-	query := "UPDATE " + tableName + " SET " + strings.Join(fieldsNameSet, ", ") + " WHERE code=?"
+	query := "UPDATE " + tableName + " SET " + strings.Join(fieldsNameSet, ", ") + " WHERE id=?"
 	// fmt.Println(query)
-	fmt.Println("brand:", p.Brand)
+	// fmt.Println("brand:", p.Brand)
 
 	_, err := db.Exec(query, fieldsInterface...)
 	return err

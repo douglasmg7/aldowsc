@@ -229,7 +229,7 @@ func (doc *xmlDoc) process() (err error) {
 
 		// Get product from db.
 		dbProduct := Product{}
-		err = dbProduct.Find(product.Code)
+		err = dbProduct.FindByCode(product.Code)
 
 		// Error.
 		if err != nil && err != sql.ErrNoRows {
@@ -264,9 +264,10 @@ func (doc *xmlDoc) process() (err error) {
 				log.Fatal(err)
 			}
 			// Update changed product.
-			product.Changed = true
+			product.Id = dbProduct.Id
 			product.CreatedAt = dbProduct.CreatedAt
 			product.ChangedAt = time.Now()
+			product.Changed = true
 			err = product.Update()
 			if err != nil {
 				log.Fatal(err)
