@@ -3,9 +3,5 @@ db/aldo.db
 
 # Include directories but not the files.
 log/*
-!log/.gitkeep 
 xml/*
 !xml/.gitkeep
-data/*
-!data/.gitkeep
-

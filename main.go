@@ -43,6 +43,7 @@ var categExc []string
 
 func init() {
 	// Log file.
+	_ = os.Mkdir("./log", os.ModePerm)
 	logFile, err := os.OpenFile("./log/ws-aldo.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 	if err != nil {
 		panic(err)
@@ -90,19 +91,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// // Get products from last update.
-	// productsRead := new(AldoProducts)
-	// err := readGob("./data/products.gob", productsRead)
-	// if err != nil {
-	// log.Fatalln(err)
-	// }
-	// fmt.Printf("type: %T\n", *productsRead)
-	// fmt.Println("Prod qtd: ", len(*productsRead))
-	// fmt.Println("product-1", (*productsRead)[0])
-	// for _, prod := range *productsRead {
-	// fmt.Println(prod.Code, "\n")
-	// }
-
 	// http://webservice.aldo.com.br/asp.net/ferramentas/integracao.ashx?u=146612&p=zunk4c?wsdl
 	// http://webservice.aldo.com.br/asp.net/ferramentas/integracao.ashx?u=146612&p=zunk4c
 	// http://webservice.aldo.com.br/asp.net/ferramentas/saldoproduto.ashx?u=146612&p=zunk4c&codigo=20764-8&qtde=1&emp_filial=1
@@ -138,15 +126,15 @@ func main() {
 	// }
 	// log.Printf("body: %s", bodyResult)
 
-	// xmlFile, err := os.Open("./xml/arquivo_integracao_exemplo.xml")
-	xmlFile, err := os.Open("./xml/test.xml")
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer xmlFile.Close()
+	// xmlFile, err := os.Open("./xml/test.xml")
+	// if err != nil {
+	// log.Fatalln(err)
+	// }
+	// defer xmlFile.Close()
 
 	aldoXMLDoc := xmlDoc{}
-	decoder := xml.NewDecoder(xmlFile)
+	decoder := xml.NewDecoder(os.Stdin)
+	// decoder := xml.NewDecoder(xmlFile)
 	decoder.CharsetReader = charset.NewReaderLabel
 	// decoder.CharsetReader = charset.NewReader
 	err = decoder.Decode(&aldoXMLDoc)
