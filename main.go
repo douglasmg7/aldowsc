@@ -139,7 +139,7 @@ func main() {
 	// decoder.CharsetReader = charset.NewReader
 	err = decoder.Decode(&aldoXMLDoc)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("Error decoding xml file:", err)
 	}
 	// fmt.Println("products: ", products)
 	// fmt.Println("product-1: ", products.Produto[1])
