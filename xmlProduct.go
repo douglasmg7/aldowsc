@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"math"
 	"regexp"
@@ -255,9 +254,9 @@ func (doc *xmlDoc) process() (err error) {
 
 		// Product changed.
 		if product.Diff(&dbProduct) {
-			fmt.Println("productDb change:", dbProduct.Changed)
-			fmt.Println("productDb CreatedAt:", dbProduct.CreatedAt)
-			fmt.Println("productDb ChangedAt:", dbProduct.ChangedAt)
+			// fmt.Println("productDb change:", dbProduct.Changed)
+			// fmt.Println("productDb CreatedAt:", dbProduct.CreatedAt)
+			// fmt.Println("productDb ChangedAt:", dbProduct.ChangedAt)
 			// Save product history.
 			err = dbProduct.SaveHistory()
 			if err != nil {
@@ -272,7 +271,7 @@ func (doc *xmlDoc) process() (err error) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Println("Product changed", product.Code)
+			log.Println("Product changed", product.Code)
 		}
 	}
 	// Average price.
@@ -284,14 +283,14 @@ func (doc *xmlDoc) process() (err error) {
 	// log.Printf("Max price desc product: %s\n", maxPriceDescriptionProduct)
 	// log.Printf("Sum price: %f", priceSum)
 	// log.Printf("Average price: %.4f", averagePrice)
-	log.Printf("Products quantity: %d", totalProductQtd)
-	log.Printf("Products quantity cut by min price(%.2f): %d", config.FilterMinPrice, prodcutQtyCutByMinPrice)
-	log.Printf("Products quantity cut by max price(%.2f): %d", config.FilterMaxPrice, prodcutQtyCutByMaxPrice)
-	log.Printf("Products quantity cut by categories filter: %d", prodcutQtyCutByCategFilter)
-	log.Printf("Products quantity cut by error: %d", productQtyCutByError)
-	log.Printf("Product used quantity: %d", usedProductQtd)
-	log.Printf("All  Categories quantity: %d", len(mCategoryAllQtd))
-	log.Printf("Used Categories quantity: %d", len(mCategoryUsedQtd))
+	log.Printf("Products total: %d", totalProductQtd)
+	log.Printf("Products cut by min price(%.2f): %d", config.FilterMinPrice, prodcutQtyCutByMinPrice)
+	log.Printf("Products cut by max price(%.2f): %d", config.FilterMaxPrice, prodcutQtyCutByMaxPrice)
+	log.Printf("Products cut by categories filter: %d", prodcutQtyCutByCategFilter)
+	log.Printf("Products cut by error: %d", productQtyCutByError)
+	log.Printf("Product used: %d", usedProductQtd)
+	log.Printf("All  Categories: %d", len(mCategoryAllQtd))
+	log.Printf("Used Categories: %d", len(mCategoryUsedQtd))
 	writeList(&mCategoryUsedQtd, "list/categUse.list")
 	writeList(&mCategoryAllQtd, "list/categAll.list")
 	return err
