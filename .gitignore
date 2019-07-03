@@ -5,3 +5,7 @@ db/aldo.db
 log/*
 xml/*
 !xml/.gitkeep
+
+# Auto generated lists.
+list/categAll.list
+list/categUse.list
