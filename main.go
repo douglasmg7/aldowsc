@@ -75,68 +75,26 @@ func init() {
 	// fmt.Println("WsAldo: ", config.WsAldo)
 	// fmt.Println("User: ", config.WsAldo.User)
 	// fmt.Println("Password: ", config.WsAldo.Password)
+
 }
 
 func main() {
 	var err error
 
-	// Start data base.
+	// Db start.
 	db, err = sql.Open("sqlite3", "./db/aldo.db")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Close()
 	err = db.Ping()
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	// http://webservice.aldo.com.br/asp.net/ferramentas/integracao.ashx?u=146612&p=zunk4c?wsdl
-	// http://webservice.aldo.com.br/asp.net/ferramentas/integracao.ashx?u=146612&p=zunk4c
-	// http://webservice.aldo.com.br/asp.net/ferramentas/saldoproduto.ashx?u=146612&p=zunk4c&codigo=20764-8&qtde=1&emp_filial=1
-
-	// wsdl
-	// url := `http://webservice.aldo.com.br/asp.net/ferramentas/integracao.ashx?wsdl`
-
-	// Product quatity.
-	// url := fmt.Sprintf(`http://webservice.aldo.com.br/asp.net/ferramentas/saldoproduto.ashx?u=%s&p=%s&codigo=%s&qtde=%s&emp_filial=%s`, config.WsAldo.User, config.WsAldo.Password, "20764-8", "1", "1")
-
-	// All products.
-	// url := fmt.Sprintf(`http://webservice.aldo.com.br/asp.net/ferramentas/integracao.ashx?u=%s&p=%s`, config.WsAldo.User, config.WsAldo.Password)
-
-	// Allnations
-	// url := fmt.Sprintf(`http://wspub.allnations.com.br/wsIntEstoqueClientesV2/ServicoReservasPedidosExt.asmx/RetornarListaProdutosEstoque?CodigoCliente=%s&Senha=%s&Data=%s`, config.AllNations.User, config.AllNations.Password, config.AllNations.LastReqTimeIni)
-
-	// url := "http://www.google.com/robots.txt"
-
-	// log.Println("url: ", url)
-
-	// res, err := http.Get(url)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// defer res.Body.Close()
-	// // bodyResult, err := ioutil.ReadAll(res.Header)
-	// bodyResult, err := ioutil.ReadAll(res.Body)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// for k, v := range res.Header {
-	// 	log.Printf("%s - %s", k, v)
-	// }
-	// log.Printf("body: %s", bodyResult)
-
-	// xmlFile, err := os.Open("./xml/test.xml")
-	// if err != nil {
-	// log.Fatalln(err)
-	// }
-	// defer xmlFile.Close()
+	defer db.Close()
 
 	aldoXMLDoc := xmlDoc{}
 	decoder := xml.NewDecoder(os.Stdin)
-	// decoder := xml.NewDecoder(xmlFile)
 	decoder.CharsetReader = charset.NewReaderLabel
-	// decoder.CharsetReader = charset.NewReader
 	err = decoder.Decode(&aldoXMLDoc)
 	if err != nil {
 		log.Fatalln("Error decoding xml file:", err)

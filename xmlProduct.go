@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/douglasmg7/aldoutil"
 	"github.com/douglasmg7/money"
 )
 
@@ -83,7 +84,7 @@ func (doc *xmlDoc) process() (err error) {
 			prodcutQtyCutByCategFilter++
 			continue
 		}
-		product := Product{}
+		product := aldoutil.Product{}
 		// Categories.
 		product.Category = xmlProduct.Category
 		// List used categories.
@@ -227,8 +228,8 @@ func (doc *xmlDoc) process() (err error) {
 		usedProductQtd++
 
 		// Get product from db.
-		dbProduct := Product{}
-		err = dbProduct.FindByCode(product.Code)
+		dbProduct := aldoutil.Product{}
+		err = dbProduct.FindByCode(db, product.Code)
 
 		// Error.
 		if err != nil && err != sql.ErrNoRows {
@@ -242,7 +243,7 @@ func (doc *xmlDoc) process() (err error) {
 			product.CreatedAt = time.Now()
 			product.ChangedAt = product.CreatedAt
 			// fmt.Println("Inserted product:", product.Code)
-			err = product.Save()
+			err = product.Save(db)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -258,7 +259,7 @@ func (doc *xmlDoc) process() (err error) {
 			// fmt.Println("productDb CreatedAt:", dbProduct.CreatedAt)
 			// fmt.Println("productDb ChangedAt:", dbProduct.ChangedAt)
 			// Save product history.
-			err = dbProduct.SaveHistory()
+			err = dbProduct.SaveHistory(db)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -267,7 +268,7 @@ func (doc *xmlDoc) process() (err error) {
 			product.CreatedAt = dbProduct.CreatedAt
 			product.ChangedAt = time.Now()
 			product.Changed = true
-			err = product.Update()
+			err = product.Update(db)
 			if err != nil {
 				log.Fatal(err)
 			}
