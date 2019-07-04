@@ -65,8 +65,8 @@ func (doc *xmlDoc) process() (err error) {
 	var prodcutQtyCutByMinPrice int
 	var prodcutQtyCutByCategFilter int
 	var productQtyCutByError int
-	mCategoryAllQtd := map[string]int{}
-	mCategoryUsedQtd := map[string]int{}
+	mCategoryAll := map[string]int{}
+	mCategoryUse := map[string]int{}
 	// var brand map[string]int
 	// List of categories to get.
 	// var available int
@@ -77,10 +77,10 @@ func (doc *xmlDoc) process() (err error) {
 	for _, xmlProduct := range doc.Products {
 		totalProductQtd++
 		// List all categories.
-		elem, _ := mCategoryAllQtd[xmlProduct.Category]
-		mCategoryAllQtd[xmlProduct.Category] = elem + 1
+		elem, _ := mCategoryAll[xmlProduct.Category]
+		mCategoryAll[xmlProduct.Category] = elem + 1
 		// Filter by categories.
-		if !isCategorieHabToBeUsed(xmlProduct.Category) {
+		if !isCategorieSelected(xmlProduct.Category) {
 			prodcutQtyCutByCategFilter++
 			continue
 		}
@@ -88,8 +88,8 @@ func (doc *xmlDoc) process() (err error) {
 		// Categories.
 		product.Category = xmlProduct.Category
 		// List used categories.
-		elem, _ = mCategoryUsedQtd[product.Category]
-		mCategoryUsedQtd[product.Category] = elem + 1
+		elem, _ = mCategoryUse[product.Category]
+		mCategoryUse[product.Category] = elem + 1
 
 		// Price.
 		var err error
@@ -275,6 +275,8 @@ func (doc *xmlDoc) process() (err error) {
 			log.Println("Product changed", product.Code)
 		}
 	}
+
+	// Save all categories on db.
 	// Average price.
 	// averagePrice := priceSum.Divide(len(products))
 
@@ -290,9 +292,9 @@ func (doc *xmlDoc) process() (err error) {
 	log.Printf("Products cut by categories filter: %d", prodcutQtyCutByCategFilter)
 	log.Printf("Products cut by error: %d", productQtyCutByError)
 	log.Printf("Product used: %d", usedProductQtd)
-	log.Printf("All  Categories: %d", len(mCategoryAllQtd))
-	log.Printf("Used Categories: %d", len(mCategoryUsedQtd))
-	writeList(&mCategoryUsedQtd, "list/categUse.list")
-	writeList(&mCategoryAllQtd, "list/categAll.list")
+	log.Printf("All  Categories: %d", len(mCategoryAll))
+	log.Printf("Used Categories: %d", len(mCategoryUse))
+	writeList(&mCategoryUse, "list/categUse.list")
+	writeList(&mCategoryAll, "list/categAll.list")
 	return err
 }

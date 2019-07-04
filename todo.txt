@@ -1,2 +1,4 @@
 Log all using log instead of fmt.
 Log num of products changed.
+
+Scrit to remove not used categories from db.

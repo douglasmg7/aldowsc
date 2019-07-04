@@ -18,8 +18,6 @@ import (
 	"strings"
 
 	"github.com/douglasmg7/money"
-	// "github.com/jinzhu/gorm"
-
 	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/net/html/charset"
 )
@@ -39,7 +37,7 @@ var devMode bool
 
 // Configuration.
 var config configuration
-var categExc []string
+var categSel []string
 
 func init() {
 	// Log file.
@@ -105,7 +103,9 @@ func main() {
 	// fmt.Println("Description: ", aldoXMLDoc.Products[1].Description)
 	// fmt.Println("Price: ", aldoXMLDoc.Products[1].Price)
 
-	categExc = readList("list/categExc.list")
+	// Read selected categories.
+	categSel = readList("list/categSel.list")
+
 	timer := time.Now()
 	err = aldoXMLDoc.process()
 	fmt.Println("Time to run (s):", time.Since(timer).Seconds())
@@ -119,44 +119,15 @@ func main() {
 /**************************************************************************************************
 * Util.
 **************************************************************************************************/
-// readlist uppercase, remove spaces and create a list of lines.
+// readlist lowercase, remove spaces and create a list of lines.
 func readList(fileName string) []string {
 	b, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		log.Fatal(err)
 	}
 	s := strings.Replace(string(b), " ", "", -1)
-	s = strings.ToUpper(s)
+	s = strings.ToLower(s)
 	return strings.Split(s, "\n")
-}
-
-// // readlist uppercase, remove spaces and create a list of lines.
-// func getCategMapToUse(fileName string) *map[string]int {
-// 	b, err := ioutil.ReadFile(fileName)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// 	// s := strings.Replace(string(b), " ", "", -1)
-// 	// s = strings.ToUpper(s)
-// 	ss := strings.Split(string(b), "\n")
-// 	m := map[string]int{}
-// 	for _, s := range ss {
-// 		m[s] = 1
-// 	}
-// 	return &m
-// }
-
-// isCategorieHabToBeUsed verify if categorie is to be used.
-func isCategorieHabToBeUsed(categorie string) bool {
-	categorie = strings.ToUpper(strings.Replace(categorie, " ", "", -1))
-	for _, categorieExc := range categExc {
-		if strings.HasPrefix(categorie, categorieExc) {
-			// fmt.Printf("Prefix : %s\n", lExc)
-			// fmt.Printf("Exclude: %s\n\n", l)
-			return false
-		}
-	}
-	return true
 }
 
 // writeList write a list to a file.
@@ -165,7 +136,7 @@ func writeList(m *map[string]int, fileName string) {
 	ss := []string{}
 	// Sort.
 	for k, v := range *m {
-		ss = append(ss, fmt.Sprintf("%s (%d)\n", k, v))
+		ss = append(ss, fmt.Sprintf("%s (%d)\n", strings.ToLower(k), v))
 	}
 	sort.Strings(ss)
 	// To buffer.
@@ -177,6 +148,19 @@ func writeList(m *map[string]int, fileName string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+// Verify if categorie is to be used.
+func isCategorieSelected(categorie string) bool {
+	categorie = strings.ToLower(strings.Replace(categorie, " ", "", -1))
+	for _, categItem := range categSel {
+		if strings.HasPrefix(categorie, categItem) {
+			// fmt.Printf("Prefix : %s\n", lExc)
+			// fmt.Printf("Exclude: %s\n\n", l)
+			return true
+		}
+	}
+	return false
 }
 
 /**************************************************************************************************
