@@ -17,12 +17,15 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/douglasmg7/aldoutil"
 	"github.com/douglasmg7/money"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/net/html/charset"
 )
 
 var db *sql.DB
+var dbAldo *sqlx.DB
 
 // Configuration file.
 type configuration struct {
@@ -90,25 +93,35 @@ func main() {
 	}
 	defer db.Close()
 
+	// Init db Aldo.
+	dbAldo = sqlx.MustConnect("sqlite3", "./db/aldo.db")
+
+	// Read selected categories.
+	log.Println("Reading selected categories list...")
+	categSel = readList("list/categSel.list")
+
+	// Remove no more selected products.
+	log.Println("Removing no more selected products...")
+	rmProductsNotSel()
+
+	// Load xml file.
+	log.Println("Loading xml file...")
 	aldoXMLDoc := xmlDoc{}
 	decoder := xml.NewDecoder(os.Stdin)
+
+	// Decoding xml file.
+	log.Println("Decoding xml file...")
 	decoder.CharsetReader = charset.NewReaderLabel
 	err = decoder.Decode(&aldoXMLDoc)
 	if err != nil {
 		log.Fatalln("Error decoding xml file:", err)
 	}
-	// fmt.Println("products: ", products)
-	// fmt.Println("product-1: ", products.Produto[1])
-	// fmt.Println("Code: ", aldoXMLDoc.Products[1].Code)
-	// fmt.Println("Description: ", aldoXMLDoc.Products[1].Description)
-	// fmt.Println("Price: ", aldoXMLDoc.Products[1].Price)
 
-	// Read selected categories.
-	categSel = readList("list/categSel.list")
-
+	// Processing products.
+	log.Println("Processing products...")
 	timer := time.Now()
 	err = aldoXMLDoc.process()
-	fmt.Println("Time to run (s):", time.Since(timer).Seconds())
+	log.Printf("Time processing products: %fs", time.Since(timer).Seconds())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -161,6 +174,37 @@ func isCategorieSelected(categorie string) bool {
 		}
 	}
 	return false
+}
+
+// Remove no more selected products from db.
+func rmProductsNotSel() {
+	// Get distinct categories from products on db.
+	dbCategs := []string{}
+	err := dbAldo.Select(&dbCategs, "SELECT distinct category FROM product")
+	if err != nil {
+		log.Fatal(fmt.Errorf("Get distinct categories from db: %v", err))
+	}
+	// Categories to be removed.
+	categToRem := []string{}
+	for _, dbCateg := range dbCategs {
+		if !isCategorieSelected(dbCateg) {
+			categToRem = append(categToRem, `"`+dbCateg+`"`)
+		}
+	}
+	log.Println("Categories to remove:", categToRem)
+	// Get products to remove.
+	products := []aldoutil.Product{}
+	fmt.Printf("SELECT * FROM product WHERE category IN (%s)", strings.Join(categToRem, ","))
+	err = dbAldo.Select(&products, fmt.Sprintf("SELECT * FROM product WHERE category IN (%s)", strings.Join(categToRem, ",")))
+	if err != nil {
+		log.Fatal(fmt.Errorf("Get products to remove from db: %v", err))
+	}
+	for _, p := range products {
+		log.Println("products to remove:", p.Code)
+	}
+
+	// Remove products.
+	// dbAldo.MustExec(fmt.Sprintf("DELETE FROM product WHERE category IN (%s)", strings.Join(categToRem, ",")))
 }
 
 /**************************************************************************************************

@@ -65,7 +65,9 @@ func (doc *xmlDoc) process() (err error) {
 	var prodcutQtyCutByMinPrice int
 	var prodcutQtyCutByCategFilter int
 	var productQtyCutByError int
+	// All categories.
 	mCategoryAll := map[string]int{}
+	// Categories in use.
 	mCategoryUse := map[string]int{}
 	// var brand map[string]int
 	// List of categories to get.
