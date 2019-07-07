@@ -293,9 +293,9 @@ func (doc *xmlDoc) process() (err error) {
 	log.Printf("Products cut by max price(%.2f): %d", config.FilterMaxPrice, prodcutQtyCutByMaxPrice)
 	log.Printf("Products cut by categories filter: %d", prodcutQtyCutByCategFilter)
 	log.Printf("Products cut by error: %d", productQtyCutByError)
-	log.Printf("Product used: %d", usedProductQtd)
-	log.Printf("All  Categories: %d", len(mCategoryAll))
-	log.Printf("Used Categories: %d", len(mCategoryUse))
+	log.Printf("Product in use: %d", usedProductQtd)
+	log.Printf("Categories total: %d", len(mCategoryAll))
+	log.Printf("Categories in use: %d", len(mCategoryUse))
 	writeList(&mCategoryUse, "list/categUse.list")
 	writeList(&mCategoryAll, "list/categAll.list")
 	return err

@@ -17,7 +17,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/douglasmg7/aldoutil"
 	"github.com/douglasmg7/money"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
@@ -101,25 +100,28 @@ func main() {
 	categSel = readList("list/categSel.list")
 
 	// Remove no more selected products.
-	log.Println("Removing no more selected products...")
 	rmProductsNotSel()
 
 	// Load xml file.
 	log.Println("Loading xml file...")
+	timer := time.Now()
 	aldoXMLDoc := xmlDoc{}
 	decoder := xml.NewDecoder(os.Stdin)
+	log.Printf("Time loading xml file: %fs", time.Since(timer).Seconds())
 
 	// Decoding xml file.
 	log.Println("Decoding xml file...")
+	timer = time.Now()
 	decoder.CharsetReader = charset.NewReaderLabel
 	err = decoder.Decode(&aldoXMLDoc)
 	if err != nil {
 		log.Fatalln("Error decoding xml file:", err)
 	}
+	log.Printf("Time decoding products: %fs", time.Since(timer).Seconds())
 
 	// Processing products.
 	log.Println("Processing products...")
-	timer := time.Now()
+	timer = time.Now()
 	err = aldoXMLDoc.process()
 	log.Printf("Time processing products: %fs", time.Since(timer).Seconds())
 	if err != nil {
@@ -191,17 +193,32 @@ func rmProductsNotSel() {
 			categToRem = append(categToRem, `"`+dbCateg+`"`)
 		}
 	}
-	log.Println("Categories to remove:", categToRem)
-	// Get products to remove.
-	products := []aldoutil.Product{}
-	fmt.Printf("SELECT * FROM product WHERE category IN (%s)", strings.Join(categToRem, ","))
-	err = dbAldo.Select(&products, fmt.Sprintf("SELECT * FROM product WHERE category IN (%s)", strings.Join(categToRem, ",")))
+	if len(categToRem) > 0 {
+		log.Printf("Removing no more selected categorie(s): %s.", strings.Join(categToRem, ", "))
+	}
+
+	// Copy products to remove to history.
+	tx := dbAldo.MustBegin()
+	tx.MustExec(fmt.Sprintf("INSERT INTO product_history SELECT * FROM product WHERE category IN (%s)", strings.Join(categToRem, ",")))
+	// Delete copied products.
+	tx.MustExec(fmt.Sprintf("DELETE FROM product WHERE category IN (%s)", strings.Join(categToRem, ",")))
+	err = tx.Commit()
 	if err != nil {
-		log.Fatal(fmt.Errorf("Get products to remove from db: %v", err))
+		log.Fatal(fmt.Errorf("Removing products from db: %v", err))
 	}
-	for _, p := range products {
-		log.Println("products to remove:", p.Code)
-	}
+
+	// Get products to remove.
+	// products := []aldoutil.Product{}
+	// fmt.Printf("SELECT * FROM product WHERE category IN (%s)", strings.Join(categToRem, ","))
+	// err = dbAldo.Select(&products, fmt.Sprintf("SELECT * FROM product WHERE category IN (%s)", strings.Join(categToRem, ",")))
+
+	// if err != nil {
+	// log.Fatal(fmt.Errorf("Get products to remove from db: %v", err))
+	// }
+
+	// for _, p := range products {
+	// log.Println("products to remove:", p.Code)
+	// }
 
 	// Remove products.
 	// dbAldo.MustExec(fmt.Sprintf("DELETE FROM product WHERE category IN (%s)", strings.Join(categToRem, ",")))
