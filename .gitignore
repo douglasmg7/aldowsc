@@ -1,11 +1,1 @@
-main
-db/aldo.db
-
-# Include directories but not the files.
-log/*
-xml/*
-!xml/.gitkeep
-
-# Auto generated lists.
-list/categAll.list
-list/categUse.list
+aldowsc

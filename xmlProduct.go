@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"math"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -296,7 +297,7 @@ func (doc *xmlDoc) process() (err error) {
 	log.Printf("Product in use: %d", usedProductQtd)
 	log.Printf("Categories total: %d", len(mCategoryAll))
 	log.Printf("Categories in use: %d", len(mCategoryUse))
-	writeList(&mCategoryUse, "list/categUse.list")
-	writeList(&mCategoryAll, "list/categAll.list")
+	writeList(&mCategoryUse, path.Join(listPath, "categUse.list"))
+	writeList(&mCategoryAll, path.Join(listPath, "categAll.list"))
 	return err
 }

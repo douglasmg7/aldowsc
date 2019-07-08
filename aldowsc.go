@@ -28,7 +28,7 @@ var dbAldo *sqlx.DB
 var dbFileName string = "aldowsc.db"
 
 // Paths.
-var appPath, logPath, dbPath, listPath string
+var appPath, logPath, dbPath, xmlPath, listPath string
 
 // Files.
 var logFile, dbFile string
@@ -51,12 +51,14 @@ var categSel []string
 func init() {
 	appPath := os.Getenv("ZUNKAPATH")
 	logPath = path.Join(appPath, "log")
-	listPath = path.Join(appPath, "list")
 	dbPath = path.Join(appPath, "db")
+	listPath = path.Join(appPath, "list")
+	xmlPath = path.Join(appPath, "xml")
 
 	os.MkdirAll(logPath, os.ModePerm)
 	os.MkdirAll(dbPath, os.ModePerm)
 	os.MkdirAll(listPath, os.ModePerm)
+	os.MkdirAll(xmlPath, os.ModePerm)
 
 	dbFile = path.Join(dbPath, "aldowsc.db")
 	logFile = path.Join(logPath, "aldowsc.log")
@@ -121,7 +123,7 @@ func main() {
 
 	// Read selected categories.
 	log.Println("Reading selected categories list...")
-	categSel = readList("list/categSel.list")
+	categSel = readList(path.Join(listPath, "categSel.list"))
 
 	// Remove no more selected products.
 	rmProductsNotSel()
