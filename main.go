@@ -3,10 +3,6 @@ package main
 import (
 	"bytes"
 	"database/sql"
-	"time"
-
-	// "database/sql"
-	// "encoding/gob"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -14,8 +10,10 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/douglasmg7/money"
 	"github.com/jmoiron/sqlx"
@@ -26,6 +24,15 @@ import (
 var db *sql.DB
 var dbAldo *sqlx.DB
 
+// File names.
+var dbFileName string = "aldowsc.db"
+
+// Paths.
+var appPath, logPath, dbPath, listPath string
+
+// Files.
+var logFile, dbFile string
+
 // Configuration file.
 type configuration struct {
 	User           string      `json:"user"`
@@ -35,16 +42,29 @@ type configuration struct {
 }
 
 // Development mode.
-var devMode bool
+var production bool
 
 // Configuration.
 var config configuration
 var categSel []string
 
 func init() {
+	appPath := os.Getenv("ZUNKAPATH")
+	logPath = path.Join(appPath, "log")
+	listPath = path.Join(appPath, "list")
+	dbPath = path.Join(appPath, "db")
+
+	os.MkdirAll(logPath, os.ModePerm)
+	os.MkdirAll(dbPath, os.ModePerm)
+	os.MkdirAll(listPath, os.ModePerm)
+
+	dbFile = path.Join(dbPath, "aldowsc.db")
+	logFile = path.Join(logPath, "aldowsc.log")
+
 	// Log file.
-	_ = os.Mkdir("./log", os.ModePerm)
-	logFile, err := os.OpenFile("./log/ws-aldo.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
+	// os.MkdirAll("path" + "//log/aldowsc.log")
+	logFile, err := os.OpenFile(logFile, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
+	// logFile, err := os.OpenFile("./log/ws-aldo.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 	if err != nil {
 		panic(err)
 	}
@@ -56,7 +76,11 @@ func init() {
 	// log.SetFlags(log.LstdFlags | log.Ldate | log.Lshortfile)
 	// log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 	// production or development mode
-	setMode()
+
+	if os.Getenv("ZUNKAENV") == "PRODUCTION" {
+		production = true
+		log.Println("Running in production mode")
+	}
 
 	// Configuration file.
 	file, err := os.Open("config.json")
@@ -82,7 +106,7 @@ func main() {
 	var err error
 
 	// Db start.
-	db, err = sql.Open("sqlite3", "./db/aldo.db")
+	db, err = sql.Open("sqlite3", dbFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -93,7 +117,7 @@ func main() {
 	defer db.Close()
 
 	// Init db Aldo.
-	dbAldo = sqlx.MustConnect("sqlite3", "./db/aldo.db")
+	dbAldo = sqlx.MustConnect("sqlite3", dbFile)
 
 	// Read selected categories.
 	log.Println("Reading selected categories list...")
@@ -222,20 +246,4 @@ func rmProductsNotSel() {
 
 	// Remove products.
 	// dbAldo.MustExec(fmt.Sprintf("DELETE FROM product WHERE category IN (%s)", strings.Join(categToRem, ",")))
-}
-
-/**************************************************************************************************
-* Run mode.
-**************************************************************************************************/
-
-// Define production or development mode.
-func setMode() {
-	for _, arg := range os.Args[1:] {
-		if arg == "dev" {
-			devMode = true
-			log.Printf("Start - development mode.\n")
-			return
-		}
-	}
-	log.Printf("Start - production mode.\n")
 }
