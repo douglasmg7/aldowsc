@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/xml"
-	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -17,6 +16,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/spf13/viper"
 	"golang.org/x/net/html/charset"
 )
 
@@ -33,7 +33,7 @@ var appPath, logPath, dbPath, xmlPath, listPath string
 var logFile, dbFile string
 
 // Min and max price filter.
-var maxPriceFilter, minPriceFilter *float64
+var maxPriceFilter, minPriceFilter int
 
 // Development mode.
 var production bool
@@ -78,10 +78,17 @@ func init() {
 		log.Println("Running in production mode")
 	}
 
-	// Configurations.
-	minPriceFilter = flag.Float64("minprice", 2000, "Menor preço filtro")
-	maxPriceFilter = flag.Float64("maxprice", 100000, "Máximo preço filtro")
-	flag.Parse()
+	// Config.
+	viper.SetDefault("aldowsc.filter.minPrice", 2000)
+	viper.SetDefault("aldowsc.filter.maxPrice", 100000)
+	viper.SetConfigName("config")
+	viper.AddConfigPath(os.Getenv("ZUNKAPATH"))
+	err = viper.ReadInConfig()
+	if err != nil {
+		log.Fatal(fmt.Errorf("Error reading config file: %s \n", err))
+	}
+	minPriceFilter = viper.GetInt("aldowsc.filter.minPrice")
+	maxPriceFilter = viper.GetInt("aldowsc.filter.maxPrice")
 }
 
 func main() {

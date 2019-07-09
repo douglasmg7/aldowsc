@@ -56,12 +56,9 @@ type xmlDoc struct {
 
 func (doc *xmlDoc) process() (err error) {
 	// Price.
-	var minPrice money.Money
-	minPrice = math.MaxFloat32
-	var maxPrice money.Money
-	// var maxPriceCodeProduct string
-	// var maxPriceDescriptionProduct string
-	var priceSum money.Money
+	var minPrice int
+	minPrice = math.MaxInt32
+	var maxPrice int
 	var prodcutQtyCutByMaxPrice int
 	var prodcutQtyCutByMinPrice int
 	var prodcutQtyCutByCategFilter int
@@ -70,9 +67,6 @@ func (doc *xmlDoc) process() (err error) {
 	mCategoryAll := map[string]int{}
 	// Categories in use.
 	mCategoryUse := map[string]int{}
-	// var brand map[string]int
-	// List of categories to get.
-	// var available int
 
 	var totalProductQtd int
 	var usedProductQtd int
@@ -96,26 +90,26 @@ func (doc *xmlDoc) process() (err error) {
 
 		// Price.
 		var err error
-		product.DealerPrice, err = money.Parse(xmlProduct.DealerPrice, ",")
+		product.DealerPrice, err = money.ParseDecimalString(xmlProduct.DealerPrice, ",")
 		if err != nil {
 			log.Printf("Could not convert dealer price, product code: %s, price: %s\n", xmlProduct.Code, xmlProduct.DealerPrice)
 			continue
 		}
 
 		// Suggestion price.
-		product.SuggestionPrice, err = money.Parse(xmlProduct.SuggestionPrice, ",")
+		product.SuggestionPrice, err = money.ParseDecimalString(xmlProduct.SuggestionPrice, ",")
 		if err != nil {
 			log.Printf("Could not convert suggestion price, product code: %s, price: %s\n", xmlProduct.Code, xmlProduct.SuggestionPrice)
 			continue
 		}
 
 		// Filter max price.
-		if float64(product.DealerPrice) > *maxPriceFilter {
+		if product.DealerPrice > maxPriceFilter {
 			prodcutQtyCutByMaxPrice++
 			continue
 		}
 		// Filter min price.
-		if float64(product.DealerPrice) < *minPriceFilter {
+		if product.DealerPrice < minPriceFilter {
 			prodcutQtyCutByMinPrice++
 			continue
 		}
@@ -225,8 +219,6 @@ func (doc *xmlDoc) process() (err error) {
 			minPrice = product.DealerPrice
 		}
 
-		// Pric sum.
-		priceSum += product.DealerPrice
 		// Product will be used.
 		usedProductQtd++
 
@@ -278,20 +270,9 @@ func (doc *xmlDoc) process() (err error) {
 			log.Println("Product changed", product.Code)
 		}
 	}
-
-	// Save all categories on db.
-	// Average price.
-	// averagePrice := priceSum.Divide(len(products))
-
-	// log.Printf("Min price: %.2f\n", minPrice)
-	// log.Printf("Max price: %.2f\n", maxPrice)
-	// log.Printf("Max price code product: %s\n", maxPriceCodeProduct)
-	// log.Printf("Max price desc product: %s\n", maxPriceDescriptionProduct)
-	// log.Printf("Sum price: %f", priceSum)
-	// log.Printf("Average price: %.4f", averagePrice)
 	log.Printf("Products total: %d", totalProductQtd)
-	log.Printf("Products cut by min price(%.2f): %d", *minPriceFilter, prodcutQtyCutByMinPrice)
-	log.Printf("Products cut by max price(%.2f): %d", *maxPriceFilter, prodcutQtyCutByMaxPrice)
+	log.Printf("Products cut by min price(%d): %d", minPriceFilter, prodcutQtyCutByMinPrice)
+	log.Printf("Products cut by max price(%d): %d", maxPriceFilter, prodcutQtyCutByMaxPrice)
 	log.Printf("Products cut by categories filter: %d", prodcutQtyCutByCategFilter)
 	log.Printf("Products cut by error: %d", productQtyCutByError)
 	log.Printf("Product in use: %d", usedProductQtd)
