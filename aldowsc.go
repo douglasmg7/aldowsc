@@ -3,8 +3,8 @@ package main
 import (
 	"bytes"
 	"database/sql"
-	"encoding/json"
 	"encoding/xml"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -15,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/douglasmg7/money"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/net/html/charset"
@@ -33,19 +32,13 @@ var appPath, logPath, dbPath, xmlPath, listPath string
 // Files.
 var logFile, dbFile string
 
-// Configuration file.
-type configuration struct {
-	User           string      `json:"user"`
-	Password       string      `json:"password"`
-	FilterMinPrice money.Money `json:"filterMinPrice"`
-	FilterMaxPrice money.Money `json:"filterMaxPrice"`
-}
+// Min and max price filter.
+var maxPriceFilter, minPriceFilter *float64
 
 // Development mode.
 var production bool
 
-// Configuration.
-var config configuration
+// Categories selected to use.
 var categSel []string
 
 func init() {
@@ -79,29 +72,16 @@ func init() {
 	// log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 	// production or development mode
 
+	// Run mode.
 	if os.Getenv("ZUNKAENV") == "PRODUCTION" {
 		production = true
 		log.Println("Running in production mode")
 	}
 
-	// Configuration file.
-	file, err := os.Open("config.json")
-	defer file.Close()
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	// sbFile, _ := ioutil.ReadAll(file)
-	// log.Printf("%s", sbFile)
-	config = configuration{}
-	err = json.NewDecoder(file).Decode(&config)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	// fmt.Println("WsAldo: ", config.WsAldo)
-	// fmt.Println("User: ", config.WsAldo.User)
-	// fmt.Println("Password: ", config.WsAldo.Password)
-
+	// Configurations.
+	minPriceFilter = flag.Float64("minprice", 2000, "Menor preço filtro")
+	maxPriceFilter = flag.Float64("maxprice", 100000, "Máximo preço filtro")
+	flag.Parse()
 }
 
 func main() {

@@ -110,12 +110,12 @@ func (doc *xmlDoc) process() (err error) {
 		}
 
 		// Filter max price.
-		if product.DealerPrice > config.FilterMaxPrice {
+		if float64(product.DealerPrice) > *maxPriceFilter {
 			prodcutQtyCutByMaxPrice++
 			continue
 		}
 		// Filter min price.
-		if product.DealerPrice < config.FilterMinPrice {
+		if float64(product.DealerPrice) < *minPriceFilter {
 			prodcutQtyCutByMinPrice++
 			continue
 		}
@@ -290,8 +290,8 @@ func (doc *xmlDoc) process() (err error) {
 	// log.Printf("Sum price: %f", priceSum)
 	// log.Printf("Average price: %.4f", averagePrice)
 	log.Printf("Products total: %d", totalProductQtd)
-	log.Printf("Products cut by min price(%.2f): %d", config.FilterMinPrice, prodcutQtyCutByMinPrice)
-	log.Printf("Products cut by max price(%.2f): %d", config.FilterMaxPrice, prodcutQtyCutByMaxPrice)
+	log.Printf("Products cut by min price(%.2f): %d", *minPriceFilter, prodcutQtyCutByMinPrice)
+	log.Printf("Products cut by max price(%.2f): %d", *maxPriceFilter, prodcutQtyCutByMaxPrice)
 	log.Printf("Products cut by categories filter: %d", prodcutQtyCutByCategFilter)
 	log.Printf("Products cut by error: %d", productQtyCutByError)
 	log.Printf("Product in use: %d", usedProductQtd)
