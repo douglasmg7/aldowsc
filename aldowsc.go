@@ -66,7 +66,8 @@ func init() {
 	// Log configuration.
 	mw := io.MultiWriter(os.Stdout, logFile)
 	log.SetOutput(mw)
-	log.SetFlags(log.Ldate | log.Lmicroseconds | log.Lshortfile)
+	log.SetFlags(log.Ldate | log.Lmicroseconds)
+	// log.SetFlags(log.Ldate | log.Lmicroseconds | log.Lshortfile)
 	// log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
 	// log.SetFlags(log.LstdFlags | log.Ldate | log.Lshortfile)
 	// log.SetFlags(log.LstdFlags | log.Lmicroseconds)
@@ -114,6 +115,9 @@ func main() {
 
 	// Remove no more selected products.
 	rmProductsNotSel()
+
+	// Remove products with price out of range.
+	rmProductsPriceOutOfRange()
 
 	// Load xml file.
 	log.Println("Loading and decoding xml file...")
@@ -217,20 +221,25 @@ func rmProductsNotSel() {
 	if err != nil {
 		log.Fatal(fmt.Errorf("Removing products from db: %v", err))
 	}
+}
 
-	// Get products to remove.
-	// products := []aldoutil.Product{}
-	// fmt.Printf("SELECT * FROM product WHERE category IN (%s)", strings.Join(categToRem, ","))
-	// err = dbAldo.Select(&products, fmt.Sprintf("SELECT * FROM product WHERE category IN (%s)", strings.Join(categToRem, ",")))
-
-	// if err != nil {
-	// log.Fatal(fmt.Errorf("Get products to remove from db: %v", err))
-	// }
-
-	// for _, p := range products {
-	// log.Println("products to remove:", p.Code)
-	// }
-
-	// Remove products.
-	// dbAldo.MustExec(fmt.Sprintf("DELETE FROM product WHERE category IN (%s)", strings.Join(categToRem, ",")))
+// Remove products with price out of defined range.
+func rmProductsPriceOutOfRange() {
+	// Copy products to remove to history.
+	tx := dbAldo.MustBegin()
+	// tx.MustExec(fmt.Sprintf("INSERT INTO product_history SELECT * FROM product WHERE category IN (%s)", strings.Join(categToRem, ",")))
+	tx.MustExec(fmt.Sprintf("INSERT INTO product_history SELECT * FROM product WHERE dealer_price NOT BETWEEN (%d) AND (%d)", minPriceFilter, maxPriceFilter))
+	// Delete copied products.
+	result := tx.MustExec(fmt.Sprintf("DELETE FROM product WHERE dealer_price NOT BETWEEN (%d) AND (%d)", minPriceFilter, maxPriceFilter))
+	err := tx.Commit()
+	if err != nil {
+		log.Fatal(fmt.Errorf("Removing products from db: %v", err))
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Fatal(fmt.Errorf("Removing products from db: %v", err))
+	}
+	if rowsAffected > 0 {
+		log.Printf("Removed %v product(s) with price out of range", rowsAffected)
+	}
 }
