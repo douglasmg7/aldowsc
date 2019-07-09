@@ -1,9 +1,12 @@
-# wsc-aldo
+aldowsc
+=======
 
-Config example
+Retrive aldo products
+
+
+Configuration file example (config.toml)
 -------
-
-Must be save on config.toml on $ZUNKAPATH
+Must be placed at location referenced by $ZUNKAPATH
 
 ```toml
 # Zunka configuration file.
@@ -12,4 +15,3 @@ Must be save on config.toml on $ZUNKAPATH
 minPrice = 2000
 maxPrice = 100000
 ```
-
