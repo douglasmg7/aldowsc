@@ -129,21 +129,19 @@ func main() {
 	rmProductsNotSel()
 
 	// Load xml file.
-	log.Println("Loading xml file...")
+	log.Println("Loading and decoding xml file...")
 	timer := time.Now()
 	aldoXMLDoc := xmlDoc{}
 	decoder := xml.NewDecoder(os.Stdin)
-	log.Printf("Time loading xml file: %fs", time.Since(timer).Seconds())
 
 	// Decoding xml file.
-	log.Println("Decoding xml file...")
 	timer = time.Now()
 	decoder.CharsetReader = charset.NewReaderLabel
 	err = decoder.Decode(&aldoXMLDoc)
 	if err != nil {
 		log.Fatalln("Error decoding xml file:", err)
 	}
-	log.Printf("Time decoding products: %fs", time.Since(timer).Seconds())
+	log.Printf("Time loading and decoding xml file: %fs", time.Since(timer).Seconds())
 
 	// Processing products.
 	log.Println("Processing products...")

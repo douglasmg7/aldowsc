@@ -7,4 +7,5 @@
 cd $(dirname $0)
 cd ..
 
+# Just run on dev mode.
 [[ $ZUNKAENV == PRODUCTION ]] && printf "Can not run in production mode!\n" $$ exit 1 || go run *.go < $ZUNKAPATH/xml/test.xml
