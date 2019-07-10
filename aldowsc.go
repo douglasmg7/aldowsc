@@ -23,9 +23,6 @@ import (
 var db *sql.DB
 var dbAldo *sqlx.DB
 
-// File names.
-var dbFileName string = "aldowsc.db"
-
 // Paths.
 var appPath, logPath, dbPath, xmlPath, listPath string
 
@@ -42,27 +39,47 @@ var production bool
 var categSel []string
 
 func init() {
-	appPath := os.Getenv("ZUNKAPATH")
-	logPath = path.Join(appPath, "log")
-	dbPath = path.Join(appPath, "db")
-	listPath = path.Join(appPath, "list")
-	xmlPath = path.Join(appPath, "xml")
+	// Config path.
+	cfgPath := os.Getenv("ZUNKAPATH")
+	if cfgPath == "" {
+		panic("Path to config.toml must be dfined on enviroment variable ZUNKAPATH")
+	}
 
+	// Config.
+	viper.AddConfigPath(cfgPath)
+	viper.SetConfigName("config")
+	viper.SetDefault("all.logDir", "log")
+	viper.SetDefault("all.dbDir", "db")
+	viper.SetDefault("all.listDir", "list")
+	viper.SetDefault("all.xmlDir", "xml")
+	viper.SetDefault("all.env", "development")
+	viper.SetDefault("aldowsc.minPrice", 2000)
+	viper.SetDefault("aldowsc.maxPrice", 100000)
+	viper.BindEnv("all.env", "ZUNKAENV")
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("Error reading config file: %s \n", err))
+	}
+
+	// Paths.
+	logPath := path.Join(cfgPath, viper.GetString("all.logDir"))
+	dbPath := path.Join(cfgPath, viper.GetString("all.dbDir"))
+	listPath = path.Join(cfgPath, viper.GetString("all.listDir"))
+	xmlPath = path.Join(cfgPath, viper.GetString("all.xmlDir"))
+	// Create path.
 	os.MkdirAll(logPath, os.ModePerm)
-	os.MkdirAll(dbPath, os.ModePerm)
 	os.MkdirAll(listPath, os.ModePerm)
 	os.MkdirAll(xmlPath, os.ModePerm)
 
-	dbFile = path.Join(dbPath, "aldowsc.db")
-	logFile = path.Join(logPath, "aldowsc.log")
+	// Db file name.
+	dbFile = path.Join(dbPath, viper.GetString("aldowsc.dbFileName"))
 
 	// Log file.
-	// os.MkdirAll("path" + "//log/aldowsc.log")
-	logFile, err := os.OpenFile(logFile, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
-	// logFile, err := os.OpenFile("./log/ws-aldo.log", os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
+	logFile, err := os.OpenFile(path.Join(logPath, viper.GetString("aldowsc.logFileName")), os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 	if err != nil {
 		panic(err)
 	}
+
 	// Log configuration.
 	mw := io.MultiWriter(os.Stdout, logFile)
 	log.SetOutput(mw)
@@ -73,23 +90,17 @@ func init() {
 	// log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 	// production or development mode
 
-	// Run mode.
-	if os.Getenv("ZUNKAENV") == "PRODUCTION" {
+	// Env mode.
+	if viper.GetString("all.env") == "production" {
 		production = true
 		log.Println("Running in production mode")
+	} else {
+		log.Println("Running in development mode")
 	}
 
-	// Config.
-	viper.SetDefault("aldowsc.filter.minPrice", 2000)
-	viper.SetDefault("aldowsc.filter.maxPrice", 100000)
-	viper.SetConfigName("config")
-	viper.AddConfigPath(os.Getenv("ZUNKAPATH"))
-	err = viper.ReadInConfig()
-	if err != nil {
-		log.Fatal(fmt.Errorf("Error reading config file: %s \n", err))
-	}
-	minPriceFilter = viper.GetInt("aldowsc.filter.minPrice")
-	maxPriceFilter = viper.GetInt("aldowsc.filter.maxPrice")
+	// Filters.
+	minPriceFilter = viper.GetInt("aldowsc.minPrice")
+	maxPriceFilter = viper.GetInt("aldowsc.maxPrice")
 }
 
 func main() {
