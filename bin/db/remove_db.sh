@@ -1,5 +1,7 @@
-#!/usr/bin/env bash
+#!/usr/bin/env bash 
+
 DB_NAME="aldowsc.db" 
+
 if [ -z "$ZUNKAPATH" ]
 then
 	printf "error: ZUNKAPATH enviorment not defined.\n" >&2
