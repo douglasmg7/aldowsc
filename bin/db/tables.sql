@@ -5,8 +5,9 @@ pragma foreign_keys = on;
 
 -- Products.
 CREATE TABLE IF NOT EXISTS product (
-	id						INTEGER PRIMARY KEY AUTOINCREMENT,
-	code                    TEXT NOT NULL UNIQUE,
+	id						INTEGER PRIMARY KEY AUTOINCREMENT,	-- Internal id.
+	mongodbId				TEXT DEFAULT "",	-- Store id from mongodb.
+	code                    TEXT NOT NULL UNIQUE,	-- Come from dealer.
 	brand                   TEXT NOT NULL,
 	category                TEXT NOT NULL,
 	description             TEXT NOT NULL,
@@ -34,8 +35,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_product_code ON product(code);
 
 -- Products history.
 CREATE TABLE IF NOT EXISTS product_history (
-	id						INTEGER PRIMARY KEY AUTOINCREMENT,
-	code					TEXT NOT NULL,
+	id						INTEGER PRIMARY KEY AUTOINCREMENT,	-- Internal id.
+	mongodbId				TEXT DEFAULT "",	-- Store id from mongodb.
+	code					TEXT NOT NULL,	-- Come from dealer.
 	brand                   TEXT NOT NULL,
 	category                TEXT NOT NULL,
 	description             TEXT NOT NULL,
