@@ -34,6 +34,6 @@ port = "8080"
 [aldowsc]
 logFileName = "aldowsc.log"
 dbFileName = "aldowsc.db"
-minPrice = 2000
-maxPrice = 100000
+minPrice = "2000,00"
+maxPrice = "100000,00"
 ```

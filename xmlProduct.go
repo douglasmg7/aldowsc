@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/douglasmg7/aldoutil"
-	"github.com/douglasmg7/money"
+	"github.com/douglasmg7/currency"
 )
 
 type xmlProduct struct {
@@ -56,9 +56,8 @@ type xmlDoc struct {
 
 func (doc *xmlDoc) process() (err error) {
 	// Price.
-	var minPrice int
-	minPrice = math.MaxInt32
-	var maxPrice int
+	var minPrice, maxPrice currency.Currency
+	minPrice = currency.Currency(math.MaxInt32)
 	var prodcutQtyCutByMaxPrice int
 	var prodcutQtyCutByMinPrice int
 	var prodcutQtyCutByCategFilter int
@@ -90,14 +89,14 @@ func (doc *xmlDoc) process() (err error) {
 
 		// Price.
 		var err error
-		product.DealerPrice, err = money.ParseDecimalString(xmlProduct.DealerPrice, ",")
+		product.DealerPrice, err = currency.Parse(xmlProduct.DealerPrice, ",")
 		if err != nil {
 			log.Printf("Could not convert dealer price, product code: %s, price: %s\n", xmlProduct.Code, xmlProduct.DealerPrice)
 			continue
 		}
 
 		// Suggestion price.
-		product.SuggestionPrice, err = money.ParseDecimalString(xmlProduct.SuggestionPrice, ",")
+		product.SuggestionPrice, err = currency.Parse(xmlProduct.SuggestionPrice, ",")
 		if err != nil {
 			log.Printf("Could not convert suggestion price, product code: %s, price: %s\n", xmlProduct.Code, xmlProduct.SuggestionPrice)
 			continue
@@ -271,8 +270,8 @@ func (doc *xmlDoc) process() (err error) {
 		}
 	}
 	log.Printf("Products total: %d", totalProductQtd)
-	log.Printf("Products cut by min price(%d): %d", minPriceFilter, prodcutQtyCutByMinPrice)
-	log.Printf("Products cut by max price(%d): %d", maxPriceFilter, prodcutQtyCutByMaxPrice)
+	log.Printf("Products cut by min price(%s): %d", minPriceFilter.Format(), prodcutQtyCutByMinPrice)
+	log.Printf("Products cut by max price(%s): %d", maxPriceFilter.Format(), prodcutQtyCutByMaxPrice)
 	log.Printf("Products cut by categories filter: %d", prodcutQtyCutByCategFilter)
 	log.Printf("Products cut by error: %d", productQtyCutByError)
 	log.Printf("Product in use: %d", usedProductQtd)

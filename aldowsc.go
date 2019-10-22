@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/douglasmg7/currency"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/spf13/viper"
@@ -30,7 +31,7 @@ var appPath, logPath, dbPath, xmlPath, listPath string
 var logFile, dbFile string
 
 // Min and max price filter.
-var maxPriceFilter, minPriceFilter int
+var maxPriceFilter, minPriceFilter currency.Currency
 
 // Development mode.
 var production bool
@@ -53,8 +54,8 @@ func init() {
 	viper.SetDefault("all.listDir", "list")
 	viper.SetDefault("all.xmlDir", "xml")
 	viper.SetDefault("all.env", "development")
-	viper.SetDefault("aldowsc.minPrice", 2000)
-	viper.SetDefault("aldowsc.maxPrice", 100000)
+	viper.SetDefault("aldowsc.minPrice", "2000,00")
+	viper.SetDefault("aldowsc.maxPrice", "100000,00")
 	viper.BindEnv("all.env", "ZUNKAENV")
 	err := viper.ReadInConfig()
 	if err != nil {
@@ -99,8 +100,14 @@ func init() {
 	}
 
 	// Filters.
-	minPriceFilter = viper.GetInt("aldowsc.minPrice")
-	maxPriceFilter = viper.GetInt("aldowsc.maxPrice")
+	minPriceFilter, err = currency.Parse(viper.GetString("aldowsc.minPrice"), ",")
+	if err != nil {
+		panic(err)
+	}
+	maxPriceFilter, err = currency.Parse(viper.GetString("aldowsc.maxPrice"), ",")
+	if err != nil {
+		panic(err)
+	}
 }
 
 func main() {

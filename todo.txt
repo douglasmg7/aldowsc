@@ -2,6 +2,5 @@ Log all using log instead of fmt.
 Log num of products changed.
 
 Script to remove not used min and max price from db.
-remove money and use *100 for money.
 
 Remove products when no more in the Aldo.
