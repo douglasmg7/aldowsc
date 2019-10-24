@@ -5,6 +5,6 @@ then
 	printf "error: ZUNKAPATH enviorment not defined.\n" >&2
 	exit 1 
 else
-	printf "Populating db %s/%s\n" $ZUNKAPATH $DB_NAME
+	printf "Populating db %s/%s\n" $ZUNKAPATH/db/$DB_NAME
 fi
 sqlite3 $ZUNKAPATH/db/$DB_NAME < data.sql
