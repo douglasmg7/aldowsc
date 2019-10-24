@@ -3,6 +3,9 @@
 # ZUNKAPATH must be defined.
 [[ -z "$ZUNKAPATH" ]] && printf "error: ZUNKAPATH enviorment not defined.\n" >&2 && exit 1 
 
+# Create dir if not exist.
+mkdir -p $ZUNKAPATH/xml
+
 if [[ "$ZUNKAENV" == "PRODUCTION" ]]
 then
 	# Get xml and process.
