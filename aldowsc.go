@@ -17,7 +17,6 @@ import (
 	"github.com/douglasmg7/currency"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/spf13/viper"
 	"golang.org/x/net/html/charset"
 )
 
@@ -41,7 +40,7 @@ var categSel []string
 
 func init() {
 	// Development mode.
-	if strings.HasPrefix(os.Args[1], "dev") {
+	if len(os.Args) > 1 && strings.HasPrefix(os.Args[1], "dev") {
 		dev = true
 		log.Println("Development mode")
 	} else {
@@ -55,19 +54,18 @@ func init() {
 	}
 	logPath := path.Join(zunkaPath, "log")
 	listPath = path.Join(zunkaPath, "list")
-	listXml = path.Join(zunkaPath, "xml")
+	xmlPath = path.Join(zunkaPath, "xml")
 	// Create path.
 	os.MkdirAll(logPath, os.ModePerm)
 	os.MkdirAll(listPath, os.ModePerm)
 	os.MkdirAll(xmlPath, os.ModePerm)
 
 	// Aldo db.
-	dbAldoFile := os.Getenv("ZUNKA_ALDOWSC_DB")
+	dbAldoFile = os.Getenv("ZUNKA_ALDOWSC_DB")
 	if dbAldoFile == "" {
 		panic("ZUNKA_ALDOWSC_DB not defined.")
 	}
 	dbAldoFile = path.Join(zunkaPath, "db", dbAldoFile)
-	// log.Println("aldoDb:", dbAldoFile)
 
 	// Log file.
 	logFile, err := os.OpenFile(path.Join(logPath, "aldowsc.log"), os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
@@ -85,7 +83,7 @@ func init() {
 	// log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 
 	// Filters.
-	minPriceFilter, err = currency.Parse("2.0000,00", ",")
+	minPriceFilter, err = currency.Parse("2.000,00", ",")
 	if err != nil {
 		panic(err)
 	}
@@ -115,6 +113,7 @@ func main() {
 	// Read selected categories.
 	log.Println("Reading selected categories list...")
 	categSel = readList(path.Join(listPath, "categSel.list"))
+	// log.Println("categSel:", categSel)
 
 	// Remove no more selected products.
 	rmProductsNotSel()
@@ -158,9 +157,13 @@ func readList(fileName string) []string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	s := strings.Replace(string(b), " ", "", -1)
+	s := strings.ReplaceAll(string(b), " ", "")
 	s = strings.ToLower(s)
-	return strings.Split(s, "\n")
+	temp := strings.Split(s, "\n")
+	if temp[len(temp)-1] == "" {
+		return temp[:len(temp)-1]
+	}
+	return temp
 }
 
 // writeList write a list to a file.
@@ -187,7 +190,9 @@ func writeList(m *map[string]int, fileName string) {
 func isCategorieSelected(categorie string) bool {
 	categorie = strings.ToLower(strings.Replace(categorie, " ", "", -1))
 	for _, categItem := range categSel {
+		// log.Printf("list: %s, xml: %s", categItem, categorie)
 		if strings.HasPrefix(categorie, categItem) {
+			// log.Println("selected")
 			// fmt.Printf("Prefix : %s\n", lExc)
 			// fmt.Printf("Exclude: %s\n\n", l)
 			return true
@@ -202,7 +207,7 @@ func rmProductsNotSel() {
 	dbCategs := []string{}
 	err := dbAldo.Select(&dbCategs, "SELECT distinct category FROM product")
 	if err != nil {
-		log.Fatal(fmt.Errorf("Get distinct categories from db: %v", err))
+		log.Fatal(fmt.Errorf("Get distinct categories from db. %v", err))
 	}
 	// Categories to be removed.
 	categToRem := []string{}

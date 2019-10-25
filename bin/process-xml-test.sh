@@ -7,5 +7,6 @@
 cd $(dirname $0)
 cd ..
 
+read -p "Run this command only in dev mode, 'y' to continue. " answer
 # Just run on dev mode.
-[[ $ZUNKAENV == PRODUCTION ]] && printf "Can not run in production mode!\n" $$ exit 1 || go run *.go < $ZUNKAPATH/xml/test.xml
+[[ $answer == 'y' ]] && go run *.go dev < $ZUNKAPATH/xml/test.xml
