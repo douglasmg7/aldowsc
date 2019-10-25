@@ -28,55 +28,49 @@ var dbAldo *sqlx.DB
 var appPath, logPath, dbPath, xmlPath, listPath string
 
 // Files.
-var logFile, dbFile string
+var logFile, dbAldoFile string
 
 // Min and max price filter.
 var maxPriceFilter, minPriceFilter currency.Currency
 
 // Development mode.
-var production bool
+var dev bool
 
 // Categories selected to use.
 var categSel []string
 
 func init() {
-	// Config path.
-	cfgPath := os.Getenv("ZUNKAPATH")
-	if cfgPath == "" {
-		panic("Path to config.toml must be dfined on enviroment variable ZUNKAPATH")
+	// Development mode.
+	if strings.HasPrefix(os.Args[1], "dev") {
+		dev = true
+		log.Println("Development mode")
+	} else {
+		log.Println("Production mode")
 	}
 
-	// Config.
-	viper.AddConfigPath(cfgPath)
-	viper.SetConfigName("config")
-	viper.SetDefault("all.logDir", "log")
-	viper.SetDefault("all.dbDir", "db")
-	viper.SetDefault("all.listDir", "list")
-	viper.SetDefault("all.xmlDir", "xml")
-	viper.SetDefault("all.env", "development")
-	viper.SetDefault("aldowsc.minPrice", "2000,00")
-	viper.SetDefault("aldowsc.maxPrice", "100000,00")
-	viper.BindEnv("all.env", "ZUNKAENV")
-	err := viper.ReadInConfig()
-	if err != nil {
-		panic(fmt.Errorf("Error reading config file: %s \n", err))
+	// Path.
+	zunkaPath := os.Getenv("ZUNKAPATH")
+	if zunkaPath == "" {
+		panic("ZUNKAPATH not defined.")
 	}
-
-	// Paths.
-	logPath := path.Join(cfgPath, viper.GetString("all.logDir"))
-	dbPath := path.Join(cfgPath, viper.GetString("all.dbDir"))
-	listPath = path.Join(cfgPath, viper.GetString("all.listDir"))
-	xmlPath = path.Join(cfgPath, viper.GetString("all.xmlDir"))
+	logPath := path.Join(zunkaPath, "log")
+	listPath = path.Join(zunkaPath, "list")
+	listXml = path.Join(zunkaPath, "xml")
 	// Create path.
 	os.MkdirAll(logPath, os.ModePerm)
 	os.MkdirAll(listPath, os.ModePerm)
 	os.MkdirAll(xmlPath, os.ModePerm)
 
-	// Db file name.
-	dbFile = path.Join(dbPath, viper.GetString("aldowsc.dbFileName"))
+	// Aldo db.
+	dbAldoFile := os.Getenv("ZUNKA_ALDOWSC_DB")
+	if dbAldoFile == "" {
+		panic("ZUNKA_ALDOWSC_DB not defined.")
+	}
+	dbAldoFile = path.Join(zunkaPath, "db", dbAldoFile)
+	// log.Println("aldoDb:", dbAldoFile)
 
 	// Log file.
-	logFile, err := os.OpenFile(path.Join(logPath, viper.GetString("aldowsc.logFileName")), os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
+	logFile, err := os.OpenFile(path.Join(logPath, "aldowsc.log"), os.O_CREATE|os.O_APPEND|os.O_RDWR, 0666)
 	if err != nil {
 		panic(err)
 	}
@@ -89,22 +83,13 @@ func init() {
 	// log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
 	// log.SetFlags(log.LstdFlags | log.Ldate | log.Lshortfile)
 	// log.SetFlags(log.LstdFlags | log.Lmicroseconds)
-	// production or development mode
-
-	// Env mode.
-	if viper.GetString("all.env") == "production" {
-		production = true
-		log.Println("Running in production mode")
-	} else {
-		log.Println("Running in development mode")
-	}
 
 	// Filters.
-	minPriceFilter, err = currency.Parse(viper.GetString("aldowsc.minPrice"), ",")
+	minPriceFilter, err = currency.Parse("2.0000,00", ",")
 	if err != nil {
 		panic(err)
 	}
-	maxPriceFilter, err = currency.Parse(viper.GetString("aldowsc.maxPrice"), ",")
+	maxPriceFilter, err = currency.Parse("100.000,00", ",")
 	if err != nil {
 		panic(err)
 	}
@@ -114,7 +99,7 @@ func main() {
 	var err error
 
 	// Db start.
-	db, err = sql.Open("sqlite3", dbFile)
+	db, err = sql.Open("sqlite3", dbAldoFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -125,7 +110,7 @@ func main() {
 	defer db.Close()
 
 	// Init db Aldo.
-	dbAldo = sqlx.MustConnect("sqlite3", dbFile)
+	dbAldo = sqlx.MustConnect("sqlite3", dbAldoFile)
 
 	// Read selected categories.
 	log.Println("Reading selected categories list...")
