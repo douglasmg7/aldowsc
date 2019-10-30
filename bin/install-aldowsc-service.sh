@@ -59,7 +59,7 @@ EOF'
 
 # Create aldo service.
 echo "creating '/lib/systemd/system/aldowsc.service'"
-sudo bash -c 'cat << EOF > /lib/systemd/system/aldowsc.service
+sudo GS=$GS bash -c 'cat << EOF > /lib/systemd/system/aldowsc.service
 [Unit]
 Description=aldowsc
 
