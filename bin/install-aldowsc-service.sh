@@ -9,15 +9,12 @@
 # Script not exist.
 [[ ! -f $GS/aldowsc/bin/fetch-xml-products-and-process.sh ]] && printf "error: script $GS/aldowsc/bin/fetch-xml-products-and-process.sh not exist.\n" >&2 && exit 1 
 
+# Uninstall script not exist.
+[[ ! -f $GS/aldowsc/bin/uninstall-aldowsc-service.sh ]] && printf "error: script $GS/aldowsc/bin/uninstall-aldowsc-service.sh not exist.\n" >&2 && exit 1
+
+
 # Remove aldowsc timer and aldo service.
-if systemctl list-units --full --all | grep -Fq "aldowsc.timer"; then
-    sudo systemctl stop aldowsc.timer 
-    sudo systemctl disable aldowsc.timer 
-    sudo rm -v /lib/systemd/system/aldowsc.timer
-    sudo rm -v /lib/systemd/system/aldowsc.service
-    sudo systemctl daemon-reload
-    sudo systemctl reset-failed
-fi
+./uninstall-aldowsc-service.sh
 
 # Create aldo timer.
 echo "creating '/lib/systemd/system/aldowsc.timer'"

@@ -6,15 +6,10 @@
 # Create dir if not exist.
 mkdir -p $ZUNKAPATH/xml
 
-if [[ "$ZUNKAENV" == "PRODUCTION" ]]
+echo $1
+if [[ $1 =~ dev ]]
 then
-	# Get xml and process.
-	curl "http://webservice.aldo.com.br/asp.net/ferramentas/integracao.ashx?u=146612&p=zunk4c" \
-		-s -w "%{stderr}$(date '+%Y-%h-%d %T') - Time to download xml file: %{time_total}s\n" \
-		2>>$ZUNKAPATH/log/xml_download_time.log \
-		| tee $ZUNKAPATH/xml/aldo_products_$(date +%Y-%h-%d-%H%M%S).xml \
-		| aldowsc
-else
+    echo Running in development mode.
 	# Go to source path.
 	cd $(dirname $0)
 	cd ..
@@ -25,4 +20,12 @@ else
 		2>>$ZUNKAPATH/log/xml_download_time.log \
 		| tee $ZUNKAPATH/xml/aldo_products_$(date +%Y-%h-%d-%H%M%S).xml \
 		| go run *.go
+else
+    echo Running in production mode.
+	# Get xml and process.
+	curl "http://webservice.aldo.com.br/asp.net/ferramentas/integracao.ashx?u=146612&p=zunk4c" \
+		-s -w "%{stderr}$(date '+%Y-%h-%d %T') - Time to download xml file: %{time_total}s\n" \
+		2>>$ZUNKAPATH/log/xml_download_time.log \
+		| tee $ZUNKAPATH/xml/aldo_products_$(date +%Y-%h-%d-%H%M%S).xml \
+		| aldowsc
 fi
