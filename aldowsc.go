@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/douglasmg7/currency"
 	"github.com/jmoiron/sqlx"
@@ -157,13 +158,29 @@ func readList(fileName string) []string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	s := strings.ReplaceAll(string(b), " ", "")
-	s = strings.ToLower(s)
-	temp := strings.Split(s, "\n")
-	if temp[len(temp)-1] == "" {
-		return temp[:len(temp)-1]
+
+	// Each no blank line is um item without spaces.
+	sa := []string{}
+	ra := []rune{}
+	for _, r := range string(b) {
+		if r == '\n' {
+			if len(ra) > 0 {
+				sa = append(sa, string(ra))
+				ra = ra[:0]
+			}
+			// fmt.Println("new line")
+		} else if !unicode.IsSpace(r) {
+			ra = append(ra, r)
+			// fmt.Printf("\"%c\" %v index %v\n", r, r, index)
+		}
 	}
-	return temp
+	if len(ra) > 0 {
+		sa = append(sa, string(ra))
+		ra = nil
+	}
+	// fmt.Println("sa: ", sa)
+
+	return sa
 }
 
 // writeList write a list to a file.
