@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-# Should run as a root.
+# # Should run as a root.
 # if [ "$EUID" -ne 0 ]; then 
   # echo "Please run as root"
   # exit
@@ -12,12 +12,21 @@
 # Uninstall script not exist.
 [[ ! -f $GS/aldowsc/bin/uninstall-aldowsc-service.sh ]] && printf "error: script $GS/aldowsc/bin/uninstall-aldowsc-service.sh not exist.\n" >&2 && exit 1
 
+# ZUNKAPATH must be defined.
+[[ -z "$ZUNKAPATH" ]] && printf "error: ZUNKAPATH enviorment not defined.\n" >&2 && exit 1 
+
+# GOPATH must be defined.
+[[ -z "$GOPATH" ]] && printf "error: GOPATH enviorment not defined.\n" >&2 && exit 1 
 
 # Remove aldowsc timer and aldo service.
 ./uninstall-aldowsc-service.sh
 
+# Link for all user access.
+echo Creating aldowsc link...
+sudo ln -s $GOPATH/bin/aldowsc /usr/local/bin/aldowsc
+
 # Create aldo timer.
-echo "creating '/lib/systemd/system/aldowsc.timer'"
+echo "creating '/lib/systemd/system/aldowsc.timer'..."
 sudo bash -c 'cat << EOF > /lib/systemd/system/aldowsc.timer
 [Unit]
 Description=aldowsc timer
@@ -55,16 +64,18 @@ WantedBy=timers.target
 EOF'
 
 # Create aldo service.
-echo "creating '/lib/systemd/system/aldowsc.service'"
-sudo GS=$GS bash -c 'cat << EOF > /lib/systemd/system/aldowsc.service
+echo "creating '/lib/systemd/system/aldowsc.service'..."
+sudo GS=$GS ZUNKAPATH=$ZUNKAPATH ZUNKA_ALDOWSC_DB=$ZUNKA_ALDOWSC_DB bash -c 'cat << EOF > /lib/systemd/system/aldowsc.service
 [Unit]
 Description=aldowsc
 
 [Service]
 Type=oneshot
 User=douglasmg7
+Environment="ZUNKAPATH=$ZUNKAPATH"
+Environment="ZUNKA_ALDOWSC_DB=$ZUNKA_ALDOWSC_DB"
 ExecStart=$GS/aldowsc/bin/fetch-xml-products-and-process.sh
 EOF'
 
-systemctl start aldowsc.timer
-systemctl enable aldowsc.timer
+sudo systemctl start aldowsc.timer
+sudo systemctl enable aldowsc.timer
