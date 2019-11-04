@@ -40,14 +40,6 @@ var dev bool
 var categSel []string
 
 func init() {
-	// Development mode.
-	if len(os.Args) > 1 && strings.HasPrefix(os.Args[1], "dev") {
-		dev = true
-		log.Println("Development mode")
-	} else {
-		log.Println("Production mode")
-	}
-
 	// Path.
 	zunkaPath := os.Getenv("ZUNKAPATH")
 	if zunkaPath == "" {
@@ -74,15 +66,6 @@ func init() {
 		panic(err)
 	}
 
-	// Log configuration.
-	mw := io.MultiWriter(os.Stdout, logFile)
-	log.SetOutput(mw)
-	log.SetFlags(log.Ldate | log.Lmicroseconds)
-	// log.SetFlags(log.Ldate | log.Lmicroseconds | log.Lshortfile)
-	// log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
-	// log.SetFlags(log.LstdFlags | log.Ldate | log.Lshortfile)
-	// log.SetFlags(log.LstdFlags | log.Lmicroseconds)
-
 	// Filters.
 	minPriceFilter, err = currency.Parse("2.000,00", ",")
 	if err != nil {
@@ -92,6 +75,27 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	// Log configuration.
+	mw := io.MultiWriter(os.Stdout, logFile)
+	log.SetOutput(mw)
+	log.SetFlags(log.Ldate | log.Lmicroseconds)
+	// log.SetFlags(log.Ldate | log.Lmicroseconds | log.Lshortfile)
+	// log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
+	// log.SetFlags(log.LstdFlags | log.Ldate | log.Lshortfile)
+	// log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+
+	// Development mode.
+	mode := ""
+	if len(os.Args) > 1 && strings.HasPrefix(os.Args[1], "dev") {
+		dev = true
+		mode = "development"
+	} else {
+		mode = "production"
+	}
+
+	// Log start.
+	log.Printf("*** Starting aldowsc in %v mode (version %s) ***\n", mode, version)
 }
 
 func main() {
@@ -124,18 +128,25 @@ func main() {
 
 	// Load xml file.
 	log.Println("Loading and decoding xml file...")
-	timer := time.Now()
+	// timer := time.Now()
 	aldoXMLDoc := xmlDoc{}
 	decoder := xml.NewDecoder(os.Stdin)
 
 	// Decoding xml file.
-	timer = time.Now()
+	timer := time.Now()
 	decoder.CharsetReader = charset.NewReaderLabel
 	err = decoder.Decode(&aldoXMLDoc)
 	if err != nil {
 		log.Fatalln("Error decoding xml file:", err)
 	}
 	log.Printf("Time loading and decoding xml file: %fs", time.Since(timer).Seconds())
+
+	// Not process zero products, to not remove current product.
+	if len(aldoXMLDoc.Products) == 0 {
+		log.Println("*** XML returned zero products ***")
+		log.Printf("Finish\n\n")
+		return
+	}
 
 	// Processing products.
 	log.Println("Processing products...")
@@ -146,7 +157,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Printf("Finish.\n\n")
+	log.Printf("Finish\n\n")
 }
 
 /**************************************************************************************************
