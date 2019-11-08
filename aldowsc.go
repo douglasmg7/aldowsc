@@ -85,15 +85,12 @@ func init() {
 	// log.SetFlags(log.LstdFlags | log.Ldate | log.Lshortfile)
 	// log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 
-	// Development mode.
-	mode := ""
+	// Run mode.
+	mode := "production"
 	if len(os.Args) > 1 && strings.HasPrefix(os.Args[1], "dev") {
 		dev = true
 		mode = "development"
-	} else {
-		mode = "production"
 	}
-
 	// Log start.
 	log.Printf("*** Starting aldowsc in %v mode (version %s) ***\n", mode, version)
 }
