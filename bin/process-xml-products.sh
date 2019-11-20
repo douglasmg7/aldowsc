@@ -7,6 +7,9 @@
 cd $(dirname $0)
 cd ..
 
+# Last downloaded XML file.
+F_LAST=$ZUNKAPATH/xml/aldo/aldo-products.xml
+
 read -p "Run this command only in dev mode, 'y' to continue. " answer
 # Just run on dev mode.
-[[ $answer == 'y' ]] && go run *.go dev < $ZUNKAPATH/xml/test.xml
+[[ $answer == 'y' ]] && go run *.go dev < $F_LAST

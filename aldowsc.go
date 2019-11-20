@@ -45,7 +45,7 @@ func init() {
 	if zunkaPath == "" {
 		panic("ZUNKAPATH not defined.")
 	}
-	logPath := path.Join(zunkaPath, "log")
+	logPath := path.Join(zunkaPath, "log", "aldo")
 	listPath = path.Join(zunkaPath, "list")
 	xmlPath = path.Join(zunkaPath, "xml")
 	// Create path.
