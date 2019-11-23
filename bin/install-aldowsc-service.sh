@@ -35,25 +35,25 @@ sudo bash -c 'cat << EOF > /lib/systemd/system/aldowsc.timer
 Description=aldowsc timer
 
 [Timer]
-OnCalendar=*-*-* 00:00:00
+OnCalendar=*-*-* 00:00:01
 # OnCalendar=*-*-* 01:00:00
 # OnCalendar=*-*-* 02:00:00
 # OnCalendar=*-*-* 03:00:00
 # OnCalendar=*-*-* 04:00:00
 # OnCalendar=*-*-* 05:00:00
-OnCalendar=*-*-* 06:00:00
+# OnCalendar=*-*-* 06:00:00
 # OnCalendar=*-*-* 07:00:00
 # OnCalendar=*-*-* 08:00:00
 # OnCalendar=*-*-* 09:00:00
 # OnCalendar=*-*-* 10:00:00
 # OnCalendar=*-*-* 11:00:00
-OnCalendar=*-*-* 12:00:00
+# OnCalendar=*-*-* 12:00:00
 # OnCalendar=*-*-* 13:00:00
 # OnCalendar=*-*-* 14:00:00
-# OnCalendar=*-*-* 15:00:00
+OnCalendar=*-*-* 15:00:00
 # OnCalendar=*-*-* 16:00:00
 # OnCalendar=*-*-* 17:00:00
-OnCalendar=*-*-* 18:00:00
+# OnCalendar=*-*-* 18:00:00
 # OnCalendar=*-*-* 19:00:00
 # OnCalendar=*-*-* 20:00:00
 # OnCalendar=*-*-* 21:00:00
