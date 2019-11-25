@@ -19,6 +19,9 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/net/html/charset"
+	// "golang.org/x/text/encoding/charmap"
+	// "code.google.com/p/go-charset/charset"
+	// _ "code.google.com/p/go-charset/data"
 )
 
 var db *sql.DB
@@ -132,6 +135,8 @@ func main() {
 	// Decoding xml file.
 	timer := time.Now()
 	decoder.CharsetReader = charset.NewReaderLabel
+	// decoder.CharsetReader = makeCharsetReader
+	// decoder.CharsetReader = charset.NewReader
 	err = decoder.Decode(&aldoXMLDoc)
 	if err != nil {
 		log.Fatalln("Error decoding xml file:", err)
@@ -160,6 +165,16 @@ func main() {
 /**************************************************************************************************
 * Util.
 **************************************************************************************************/
+
+// func makeCharsetReader(charset string, input io.Reader) (io.Reader, error) {
+// if charset == "iso-8859-1" {
+// // Windows-1252 is a superset of ISO-8859-1, so should do here
+// return charmap.Windows1252.NewDecoder().Reader(input), nil
+// }
+// return nil, fmt.Errorf("Unknown charset: %s", charset)
+
+// }
+
 // readlist lowercase, remove spaces and create a list of lines.
 func readList(fileName string) []string {
 	b, err := ioutil.ReadFile(fileName)

@@ -11,8 +11,11 @@ mkdir -p $ZUNKAPATH/log/aldo
 F_LAST=$ZUNKAPATH/xml/aldo/aldo-products.xml
 # XML file backup.
 F_BACKUP=$ZUNKAPATH/xml/aldo/aldo-products-$(date +%Y-%h-%d-%H%M%S).xml
+# XML file with substitutions. 
+F_LAST_SUB=$ZUNKAPATH/xml/aldo/aldo-products-substitution.xml
 # Log file.
 F_LOG=$ZUNKAPATH/log/aldo/aldo-xml-products.log
+
 
 # Get xml file.
 echo Downloading XML file.
@@ -35,6 +38,10 @@ printf "$(date +%FT%T%:z)  %.1fs  %.0fkb  $F_BACKUP\n" $TIME $SIZE >> $F_LOG
 # Copy as last xml file.
 cp $F_BACKUP $F_LAST
 
+# Create XML with Substitutions.
+echo Creating xml with substitutions...
+sed -f ./substitution-list.txt $F_LAST > $F_LAST_SUB
+
 # Process xml file.
-echo Processing XML file.
-aldowsc < $F_LAST
+echo Processing XML file...
+aldowsc < $F_LAST_SUB

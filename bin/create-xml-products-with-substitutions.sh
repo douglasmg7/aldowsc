@@ -5,11 +5,11 @@
 
 # Go to source path.
 cd $(dirname $0)
-cd ..
 
 # Last downloaded XML file.
-F_LAST=$ZUNKAPATH/xml/aldo/aldo-products-substitution.xml
+F_LAST=$ZUNKAPATH/xml/aldo/aldo-products.xml
+# File to write.
+F_OUT=$ZUNKAPATH/xml/aldo/aldo-products-substitution.xml
 
-read -p "Run this command only in dev mode, 'y' to continue. " answer
-# Just run on dev mode.
-[[ $answer == 'y' ]] && go run *.go dev < $F_LAST
+# Substitutions.
+sed -f ./substitution-list.txt $F_LAST > $F_OUT
