@@ -2,12 +2,12 @@
 
 
 [[projects]]
-  digest = "1:5d6cbfd241b0d2ab9475690a432d39e2d2559b768a4d38a6f8207d0d414943b4"
+  digest = "1:020b04b109ef05f68ea6637a71b1217891f2cdc60a87b6bfad190d1494a6ff56"
   name = "github.com/douglasmg7/aldoutil"
   packages = ["."]
   pruneopts = "UT"
-  revision = "5b4653a7c7930c409bb08b4a898e89eda00fbc0d"
-  version = "v0.2.3"
+  revision = "b76a129041a27e09e481bc3df1818dab73c76696"
+  version = "v0.3.0"
 
 [[projects]]
   branch = "master"
@@ -85,7 +85,6 @@
     "github.com/jmoiron/sqlx",
     "github.com/mattn/go-sqlite3",
     "golang.org/x/net/html/charset",
-    "golang.org/x/text/encoding/charmap",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

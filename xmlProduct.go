@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"log"
 	"math"
-	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -72,18 +71,18 @@ func (doc *xmlDoc) process() (err error) {
 
 	for _, xmlProduct := range doc.Products {
 		totalProductQtd++
-		// List all categories.
+		// Map of all categories.
 		elem, _ := mCategoryAll[xmlProduct.Category]
 		mCategoryAll[xmlProduct.Category] = elem + 1
 		// Filter by categories.
-		if !isCategorieSelected(xmlProduct.Category) {
+		if _, ok := selectedCategories[strings.ReplaceAll(strings.ToLower(xmlProduct.Category), " ", "")]; !ok {
 			prodcutQtyCutByCategFilter++
 			continue
 		}
 		product := aldoutil.Product{}
 		// Categories.
 		product.Category = xmlProduct.Category
-		// List used categories.
+		// Map of used categories.
 		elem, _ = mCategoryUse[product.Category]
 		mCategoryUse[product.Category] = elem + 1
 
@@ -269,15 +268,12 @@ func (doc *xmlDoc) process() (err error) {
 			log.Println("Product changed", product.Code)
 		}
 	}
-	log.Printf("Products total: %d", totalProductQtd)
-	log.Printf("Products cut by min price(%s): %d", minPriceFilter.Format(), prodcutQtyCutByMinPrice)
-	log.Printf("Products cut by max price(%s): %d", maxPriceFilter.Format(), prodcutQtyCutByMaxPrice)
-	log.Printf("Products cut by categories filter: %d", prodcutQtyCutByCategFilter)
-	log.Printf("Products cut by error: %d", productQtyCutByError)
-	log.Printf("Product in use: %d", usedProductQtd)
-	log.Printf("Categories total: %d", len(mCategoryAll))
-	log.Printf("Categories in use: %d", len(mCategoryUse))
-	writeList(&mCategoryUse, path.Join(listPath, "categUse.list"))
-	writeList(&mCategoryAll, path.Join(listPath, "categAll.list"))
+	log.Printf("Using %d products from %d", usedProductQtd, totalProductQtd)
+	log.Printf("Products cutted by min price(%s): %d", minPriceFilter.Format(), prodcutQtyCutByMinPrice)
+	log.Printf("Products cutted by max price(%s): %d", maxPriceFilter.Format(), prodcutQtyCutByMaxPrice)
+	log.Printf("Products cutted by categories filter: %d", prodcutQtyCutByCategFilter)
+	log.Printf("Products cutted by error: %d", productQtyCutByError)
+	log.Printf("Using %d categories from %d", len(mCategoryUse), len(mCategoryAll))
+	updateDBCategories(&mCategoryAll)
 	return err
 }

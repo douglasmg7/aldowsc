@@ -1,20 +1,17 @@
 package main
 
 import (
-	"bytes"
 	"database/sql"
 	"encoding/xml"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path"
-	"sort"
 	"strings"
 	"time"
-	"unicode"
 
+	"github.com/douglasmg7/aldoutil"
 	"github.com/douglasmg7/currency"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
@@ -28,7 +25,7 @@ var db *sql.DB
 var dbAldo *sqlx.DB
 
 // Paths.
-var appPath, logPath, dbPath, xmlPath, listPath string
+var appPath, logPath, dbPath, xmlPath string
 
 // Files.
 var logFile, dbAldoFile string
@@ -39,8 +36,8 @@ var maxPriceFilter, minPriceFilter currency.Currency
 // Development mode.
 var dev bool
 
-// Categories selected to use.
-var categSel []string
+// Categories selected to use, key is the name for category.
+var selectedCategories map[string]aldoutil.Category
 
 func init() {
 	// Path.
@@ -49,11 +46,9 @@ func init() {
 		panic("ZUNKAPATH not defined.")
 	}
 	logPath := path.Join(zunkaPath, "log", "aldo")
-	listPath = path.Join(zunkaPath, "list")
 	xmlPath = path.Join(zunkaPath, "xml")
 	// Create path.
 	os.MkdirAll(logPath, os.ModePerm)
-	os.MkdirAll(listPath, os.ModePerm)
 	os.MkdirAll(xmlPath, os.ModePerm)
 
 	// Aldo db.
@@ -115,10 +110,18 @@ func main() {
 	// Init db Aldo.
 	dbAldo = sqlx.MustConnect("sqlite3", dbAldoFile)
 
-	// Read selected categories.
-	log.Println("Reading selected categories list...")
-	categSel = readList(path.Join(listPath, "categSel.list"))
-	// log.Println("categSel:", categSel)
+	// Getting selected categories.
+	log.Println("Reading selected categories from db...")
+	selectedCategoriesArray := []aldoutil.Category{}
+	err = dbAldo.Select(&selectedCategoriesArray, "SELECT * FROM category where selected=true")
+	if err != nil {
+		log.Fatalln("Getting categories from db:", err)
+	}
+	selectedCategories = map[string]aldoutil.Category{}
+	for _, category := range selectedCategoriesArray {
+		selectedCategories[category.Name] = category
+	}
+	// log.Println("selectedCategories:", selectedCategories)
 
 	// Remove no more selected products.
 	rmProductsNotSel()
@@ -175,70 +178,17 @@ func main() {
 
 // }
 
-// readlist lowercase, remove spaces and create a list of lines.
-func readList(fileName string) []string {
-	b, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		log.Fatal(err)
+func updateDBCategories(m *map[string]int) {
+	// Each category.
+	for category, quantity := range *m {
+		text := strings.ToLower(category)
+		name := strings.ReplaceAll(text, " ", "")
+		// fmt.Printf("name: %s\n", name)
+		// fmt.Printf("text: %s\n", text)
+		// fmt.Printf("productsQty: %v\n", quantity)
+		// fmt.Printf("selected: %v\n", false)
+		dbAldo.MustExec(fmt.Sprintf("INSERT INTO category(name, text, productsQty, selected) VALUES(\"%s\", \"%s\", %v, %v) ON CONFLICT(name) DO UPDATE SET productsQty=excluded.productsQty", name, text, quantity, false))
 	}
-
-	// Each no blank line is um item without spaces.
-	sa := []string{}
-	ra := []rune{}
-	for _, r := range string(b) {
-		if r == '\n' {
-			if len(ra) > 0 {
-				sa = append(sa, string(ra))
-				ra = ra[:0]
-			}
-			// fmt.Println("new line")
-		} else if !unicode.IsSpace(r) {
-			ra = append(ra, r)
-			// fmt.Printf("\"%c\" %v index %v\n", r, r, index)
-		}
-	}
-	if len(ra) > 0 {
-		sa = append(sa, string(ra))
-		ra = nil
-	}
-	// fmt.Println("sa: ", sa)
-
-	return sa
-}
-
-// writeList write a list to a file.
-func writeList(m *map[string]int, fileName string) {
-	b := bytes.Buffer{}
-	ss := []string{}
-	// Sort.
-	for k, v := range *m {
-		ss = append(ss, fmt.Sprintf("%s (%d)\n", strings.ToLower(k), v))
-	}
-	sort.Strings(ss)
-	// To buffer.
-	for _, s := range ss {
-		b.WriteString(s)
-	}
-	// Write to file.
-	err := ioutil.WriteFile(fileName, bytes.TrimRight(b.Bytes(), "\n"), 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-// Verify if categorie is to be used.
-func isCategorieSelected(categorie string) bool {
-	categorie = strings.ToLower(strings.Replace(categorie, " ", "", -1))
-	for _, categItem := range categSel {
-		// log.Printf("list: %s, xml: %s", categItem, categorie)
-		if strings.HasPrefix(categorie, categItem) {
-			// log.Println("selected")
-			// fmt.Printf("Prefix : %s\n", lExc)
-			// fmt.Printf("Exclude: %s\n\n", l)
-			return true
-		}
-	}
-	return false
 }
 
 // Remove no more selected products from db.
@@ -252,7 +202,9 @@ func rmProductsNotSel() {
 	// Categories to be removed.
 	categToRem := []string{}
 	for _, dbCateg := range dbCategs {
-		if !isCategorieSelected(dbCateg) {
+		// fmt.Println("dbCateg:", strings.ReplaceAll(strings.ToLower(dbCateg), " ", ""))
+		// fmt.Println("selectedCategories:", selectedCategories)
+		if _, ok := selectedCategories[strings.ReplaceAll(strings.ToLower(dbCateg), " ", "")]; !ok {
 			categToRem = append(categToRem, `"`+dbCateg+`"`)
 		}
 	}

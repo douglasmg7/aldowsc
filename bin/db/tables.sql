@@ -4,6 +4,14 @@
 pragma foreign_keys = on;
 
 -- Products.
+CREATE TABLE IF NOT EXISTS category (
+	name                    TEXT PRIMARY KEY,	-- Name without space.
+	text                    TEXT NOT NULL,
+	productsQty             INTEGER NOT NULL,
+	selected                BOOLEAN NOT NULL
+);
+
+-- Products.
 CREATE TABLE IF NOT EXISTS product (
 	id						INTEGER PRIMARY KEY AUTOINCREMENT,	-- Internal id.
 	mongodbId				TEXT DEFAULT "",	-- Store id from mongodb.
