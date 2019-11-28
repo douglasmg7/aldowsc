@@ -15,7 +15,3 @@ if [[ $1 == dev ]]; then
 else
     aldowsc < $F_LAST
 fi
-
-# read -p "Run this command only in dev mode, 'y' to continue. " answer
-# # Just run on dev mode.
-# [[ $answer == 'y' ]] && go run *.go dev < $F_LAST
