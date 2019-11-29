@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS product_history (
 	changed                 BOOLEAN NOT NULL,
 	new                     BOOLEAN NOT NULL,
 	removed                 BOOLEAN NOT NULL,
-	storeProductId			INTEGER,
+	store_product_id		INTEGER,
 	UNIQUE (code, changed_at)
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_product_history_code_changed_at ON product_history(code, changed_at);
