@@ -8,10 +8,10 @@ cd $(dirname $0)
 cd ..
 
 # Last downloaded XML file.
-F_LAST=$ZUNKAPATH/xml/aldo/aldo-products-substitution.xml
+FILE=$ZUNKAPATH/xml/aldo/aldo-products-substitution.xml
 
 if [[ $1 == dev ]]; then
-    go run *.go dev < $F_LAST
+    go run *.go dev < $FILE
 else
-    aldowsc < $F_LAST
+    aldowsc < $FILE
 fi

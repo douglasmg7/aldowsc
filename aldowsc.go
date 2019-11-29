@@ -15,7 +15,7 @@ import (
 	"github.com/douglasmg7/currency"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
-	"golang.org/x/net/html/charset"
+	// "golang.org/x/net/html/charset"
 	// "golang.org/x/text/encoding/charmap"
 	// "code.google.com/p/go-charset/charset"
 	// _ "code.google.com/p/go-charset/data"
@@ -65,7 +65,7 @@ func init() {
 	}
 
 	// Filters.
-	minPriceFilter, err = currency.Parse("2.000,00", ",")
+	minPriceFilter, err = currency.Parse("1.400,00", ",")
 	if err != nil {
 		panic(err)
 	}
@@ -91,6 +91,7 @@ func init() {
 	}
 	// Log start.
 	log.Printf("*** Starting aldowsc in %v mode (version %s) ***\n", mode, version)
+	// log.Printf("*** Starting aldowsc in %v mode (version %s) ***\n", mode, "1")
 }
 
 func main() {
@@ -137,7 +138,7 @@ func main() {
 
 	// Decoding xml file.
 	timer := time.Now()
-	decoder.CharsetReader = charset.NewReaderLabel
+	// decoder.CharsetReader = charset.NewReaderLabel
 	// decoder.CharsetReader = makeCharsetReader
 	// decoder.CharsetReader = charset.NewReader
 	err = decoder.Decode(&aldoXMLDoc)
@@ -145,6 +146,8 @@ func main() {
 		log.Fatalln("Error decoding xml file:", err)
 	}
 	log.Printf("Time loading and decoding xml file: %fs", time.Since(timer).Seconds())
+	// log.Printf("codigo: %q\n", aldoXMLDoc.Products[0].Code)
+	// log.Printf("descricao_tecnica: %v\n", aldoXMLDoc.Products[0].TechnicalDescription)
 
 	// Not process zero products, to not remove current product.
 	if len(aldoXMLDoc.Products) == 0 {

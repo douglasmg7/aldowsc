@@ -1,1 +1,1 @@
-s/MONITOR_RESOLUÇÃO/MONITOR_RESOLUCAO/g
+s/encoding="iso-8859-1"/encoding="utf-8"/

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# ZUNKAPATH must be defined.
 [[ -z "$ZUNKAPATH" ]] && printf "error: ZUNKAPATH enviorment not defined.\n" >&2 && exit 1 
+[[ -z "$GS" ]] && printf "error: GS enviorment not defined.\n" >&2 && exit 1 
 
 # Create dir if not exist.
 mkdir -p $ZUNKAPATH/xml/aldo
@@ -38,9 +38,12 @@ printf "$(date +%FT%T%:z)  %.1fs  %.0fkb  $F_BACKUP\n" $TIME $SIZE >> $F_LOG
 # Copy as last xml file.
 cp $F_BACKUP $F_LAST
 
+# Substitution file.
+F_SUB=$GS/aldowsc/bin/substitution-list.txt
+
 # Create XML with Substitutions.
 echo Creating xml with substitutions...
-sed -f ./substitution-list.txt $F_LAST > $F_LAST_SUB
+sed -f $F_SUB $F_LAST > $F_LAST_SUB
 
 # Process xml file.
 echo Processing XML file...

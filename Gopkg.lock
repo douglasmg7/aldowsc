@@ -2,20 +2,20 @@
 
 
 [[projects]]
-  digest = "1:020b04b109ef05f68ea6637a71b1217891f2cdc60a87b6bfad190d1494a6ff56"
+  digest = "1:61266650cc0dca1d7da34c71d4705f52fb21e7f255643bb8d40403357ce65a8c"
   name = "github.com/douglasmg7/aldoutil"
   packages = ["."]
   pruneopts = "UT"
-  revision = "b76a129041a27e09e481bc3df1818dab73c76696"
-  version = "v0.3.0"
+  revision = "ae292f8d2eb93ddfc2d9f7778ce169735141489e"
+  version = "v0.3.1"
 
 [[projects]]
-  branch = "master"
-  digest = "1:b13fc569a6298f4c09a91707c30e0398bf336362ce355782700daae72c036eeb"
+  digest = "1:f316c463622cf004e0dc736cc373a571dae2474b5df79e41260f7e00985d7d61"
   name = "github.com/douglasmg7/currency"
   packages = ["."]
   pruneopts = "UT"
-  revision = "f372ba5a7db608d7b1e929d11e2081b01fac7bd2"
+  revision = "cc0dd53259a78351c5ddfa60fc4d09de1c62e0bb"
+  version = "v0.1.0"
 
 [[projects]]
   digest = "1:6c41d4f998a03b6604227ccad36edaed6126c397e5d78709ef4814a1145a6757"
@@ -36,46 +36,6 @@
   revision = "590d44c02bca83987d23f6eab75e6d0ddf95f644"
   version = "v1.13.0"
 
-[[projects]]
-  branch = "master"
-  digest = "1:e18aa5dcd958515838eca1c07d25e298b8450022c6efd99d04d614b32f0318e3"
-  name = "golang.org/x/net"
-  packages = [
-    "html",
-    "html/atom",
-    "html/charset",
-  ]
-  pruneopts = "UT"
-  revision = "ffdde105785063a81acd95bdf89ea53f6e0aac2d"
-
-[[projects]]
-  digest = "1:8a0baffd5559acaa560f854d7d525c02f4fec2d4f8a214398556fb661a10f6e0"
-  name = "golang.org/x/text"
-  packages = [
-    "encoding",
-    "encoding/charmap",
-    "encoding/htmlindex",
-    "encoding/internal",
-    "encoding/internal/identifier",
-    "encoding/japanese",
-    "encoding/korean",
-    "encoding/simplifiedchinese",
-    "encoding/traditionalchinese",
-    "encoding/unicode",
-    "internal/gen",
-    "internal/language",
-    "internal/language/compact",
-    "internal/tag",
-    "internal/utf8internal",
-    "language",
-    "runes",
-    "transform",
-    "unicode/cldr",
-  ]
-  pruneopts = "UT"
-  revision = "342b2e1fbaa52c93f31447ad2c6abc048c63e475"
-  version = "v0.3.2"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
@@ -84,7 +44,6 @@
     "github.com/douglasmg7/currency",
     "github.com/jmoiron/sqlx",
     "github.com/mattn/go-sqlite3",
-    "golang.org/x/net/html/charset",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
