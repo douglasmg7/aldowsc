@@ -22,7 +22,7 @@
 [[ ! -f $GS/aldowsc/bin/uninstall-aldowsc-service.sh ]] && printf "error: script $GS/aldowsc/bin/uninstall-aldowsc-service.sh not exist.\n" >&2 && exit 1
 
 # Remove aldowsc timer and aldo service.
-./uninstall-aldowsc-service.sh
+$GS/aldowsc/bin/uninstall-aldowsc-service.sh
 
 # Make aldowsc script wide system accessible.
 echo Creating symobolic link for aldowsc script...
