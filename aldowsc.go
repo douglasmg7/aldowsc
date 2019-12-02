@@ -190,7 +190,7 @@ func updateDBCategories(m *map[string]int) {
 		// fmt.Printf("text: %s\n", text)
 		// fmt.Printf("productsQty: %v\n", quantity)
 		// fmt.Printf("selected: %v\n", false)
-		dbAldo.MustExec(fmt.Sprintf("INSERT INTO category(name, text, productsQty, selected) VALUES(\"%s\", \"%s\", %v, %v) ON CONFLICT(name) DO UPDATE SET productsQty=excluded.productsQty", name, text, quantity, false))
+		dbAldo.MustExec(fmt.Sprintf("INSERT INTO category(name, text, products_qty, selected) VALUES(\"%s\", \"%s\", %v, %v) ON CONFLICT(name) DO UPDATE SET products_qty=excluded.products_qty", name, text, quantity, false))
 	}
 }
 

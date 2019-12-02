@@ -7,14 +7,14 @@ pragma foreign_keys = on;
 CREATE TABLE IF NOT EXISTS category (
 	name                    TEXT PRIMARY KEY,	-- Name without space.
 	text                    TEXT NOT NULL,
-	productsQty             INTEGER NOT NULL,
+	products_qty            INTEGER NOT NULL,
 	selected                BOOLEAN NOT NULL
 );
 
 -- Products.
 CREATE TABLE IF NOT EXISTS product (
 	id						INTEGER PRIMARY KEY AUTOINCREMENT,	-- Internal id.
-	mongodbId				TEXT DEFAULT "",	-- Store id from mongodb.
+	mongodb_id				TEXT DEFAULT "",	-- Store id from mongodb.
 	code                    TEXT NOT NULL UNIQUE,	-- Come from dealer.
 	brand                   TEXT NOT NULL,
 	category                TEXT NOT NULL,
@@ -44,7 +44,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_product_code ON product(code);
 -- Products history.
 CREATE TABLE IF NOT EXISTS product_history (
 	id						INTEGER PRIMARY KEY AUTOINCREMENT,	-- Internal id.
-	mongodbId				TEXT DEFAULT "",	-- Store id from mongodb.
+	mongodb_id				TEXT DEFAULT "",	-- Store id from mongodb.
 	code					TEXT NOT NULL,	-- Come from dealer.
 	brand                   TEXT NOT NULL,
 	category                TEXT NOT NULL,
