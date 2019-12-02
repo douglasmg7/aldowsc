@@ -77,6 +77,7 @@ Type=oneshot
 User=douglasmg7
 Environment="ZUNKAPATH=$ZUNKAPATH"
 Environment="ZUNKA_ALDOWSC_DB=$ZUNKA_ALDOWSC_DB"
+Environment="GS=$GS"
 ExecStart=$GS/aldowsc/bin/fetch-xml-products-and-process.sh
 EOF'
 
