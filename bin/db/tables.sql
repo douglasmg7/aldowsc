@@ -3,6 +3,12 @@
 -- not working, reset to off when back to db
 pragma foreign_keys = on;
 
+-- Parameters.
+CREATE TABLE IF NOT EXISTS param (
+	name                    TEXT PRIMARY KEY,	-- Name without space.
+	value                   TEXT,
+);
+
 -- Products.
 CREATE TABLE IF NOT EXISTS category (
 	name                    TEXT PRIMARY KEY,	-- Name without space.

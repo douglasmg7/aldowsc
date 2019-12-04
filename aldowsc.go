@@ -65,11 +65,13 @@ func init() {
 	}
 
 	// Filters.
-	minPriceFilter, err = currency.Parse("1.400,00", ",")
+	// minPriceFilter, err = currency.Parse("1.400,00", ",")
+	minPriceFilter, err = currency.Parse("50,00", ",")
 	if err != nil {
 		panic(err)
 	}
-	maxPriceFilter, err = currency.Parse("100.000,00", ",")
+	// maxPriceFilter, err = currency.Parse("100.000,00", ",")
+	maxPriceFilter, err = currency.Parse("100.000.000,00", ",")
 	if err != nil {
 		panic(err)
 	}
