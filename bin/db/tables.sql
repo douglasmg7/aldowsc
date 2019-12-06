@@ -6,7 +6,7 @@ pragma foreign_keys = on;
 -- Parameters.
 CREATE TABLE IF NOT EXISTS param (
 	name                    TEXT PRIMARY KEY,	-- Name without space.
-	value                   TEXT,
+	value                   TEXT
 );
 
 -- Products.
@@ -25,8 +25,8 @@ CREATE TABLE IF NOT EXISTS product (
 	brand                   TEXT NOT NULL,
 	category                TEXT NOT NULL,
 	description             TEXT NOT NULL,
-	unit                    TEXT NOT NULL,
-	multiple                INTEGER NOT NULL,
+	--  unit                    TEXT NOT NULL,
+	--  multiple                INTEGER NOT NULL,
 	dealer_price            INTEGER NOT NULL,
 	suggestion_price        INTEGER NOT NULL,
 	technical_description   TEXT NOT NULL,
@@ -55,8 +55,8 @@ CREATE TABLE IF NOT EXISTS product_history (
 	brand                   TEXT NOT NULL,
 	category                TEXT NOT NULL,
 	description             TEXT NOT NULL,
-	unit                    TEXT NOT NULL,
-	multiple                INTEGER NOT NULL,
+	--  unit                    TEXT NOT NULL,
+	--  multiple                INTEGER NOT NULL,
 	dealer_price            INTEGER NOT NULL,
 	suggestion_price        REAL NOT NULL,
 	technical_description   TEXT NOT NULL,

@@ -18,35 +18,16 @@ type xmlProduct struct {
 	Brand       string `xml:"marca,attr"`
 	Category    string `xml:"categoria,attr"`
 	Description string `xml:"descricao,attr"`
-	Unit        string `xml:"unidade,attr"`
-	Multiplo    string `xml:"multiplo,attr"`
 	DealerPrice string `xml:"preco,attr"`
 	// Suggestion price to sell.
 	SuggestionPrice      string `xml:"precoeup,attr"`
 	Weight               string `xml:"peso,attr"`
 	TechnicalDescription string `xml:"descricao_tecnica,attr"`
 	Availability         string `xml:"disponivel,attr"`
-	// Ipi               string `xml:"ipi,attr"`
-	Measurements string `xml:"dimensoes,attr"`
-	// Abnt              string `xml:"abnt,attr"`
-	// Ncm               string `xml:"ncm,attr"`
-	// Origem            string `xml:"origem,attr"`
-	// Ppb               string `xml:"ppb,attr"`
-	// Portariappb       string `xml:"portariappb,attr"`
-	// Mpdobem           string `xml:"mpdobem,attr"`
-	// Dataportariappb   string `xml:"dataportariappb,attr"`
-	// Icms              string `xml:"icms,attr"`
-	// Reducao           string `xml:"reducao,attr"`
-	// Precocomst        string `xml:"precocomst,attr"`
-	// Produtocomst      string `xml:"produtocomst,attr"`
-	PictureLink string `xml:"foto,attr"`
-	// DescricaoAmigavel string `xml:"descricao_amigavel,attr"`
-	// CategoriaTi       string `xml:"categoria_ti,attr"`
-	WarrantyTime string `xml:"tempo_garantia,attr"`
-	RMAProcedure string `xml:"procedimentos_rma,attr"`
-	// YoutubeLink         string `xml:"link_youtube,attr"`
-	// EmpFilial         string `xml:"emp_filial,attr"`
-	// Potencia          string `xml:"potencia,attr"`
+	Measurements         string `xml:"dimensoes,attr"`
+	PictureLink          string `xml:"foto,attr"`
+	WarrantyTime         string `xml:"tempo_garantia,attr"`
+	RMAProcedure         string `xml:"procedimentos_rma,attr"`
 }
 
 type xmlDoc struct {
@@ -120,18 +101,6 @@ func (doc *xmlDoc) process() (err error) {
 
 		// Description.
 		product.Description = xmlProduct.Description
-
-		// Unit.
-		product.Unit = xmlProduct.Unit
-
-		// Multiple (multiple of unit).
-		multipleInt64, err := strconv.ParseInt(xmlProduct.Multiplo, 10, 0)
-		if err != nil {
-			log.Printf("Product with code %s not imported (invalid multiple), err: %s", product.Code, err)
-			productQtyCutByError++
-			continue
-		}
-		product.Multiple = int(multipleInt64)
 
 		// Techincal description.
 		product.TechnicalDescription = xmlProduct.TechnicalDescription
