@@ -2,12 +2,12 @@
 
 
 [[projects]]
-  digest = "1:078a53d42fc28b7fa435b8c8ff876226a7bc61434ca0f1182c3e1a4a7d15d114"
+  digest = "1:f184b86eb16e944b43aaabe554fdfd74a4149effa726d7a224babbda4163639f"
   name = "github.com/douglasmg7/aldoutil"
   packages = ["."]
   pruneopts = "UT"
-  revision = "b3390026860e568d67d713b8061de6e13fd9f506"
-  version = "v0.4.2"
+  revision = "1a9c1220a6e5b034d30157c43e95c7ca19c7682f"
+  version = "v0.5.0"
 
 [[projects]]
   digest = "1:f316c463622cf004e0dc736cc373a571dae2474b5df79e41260f7e00985d7d61"
