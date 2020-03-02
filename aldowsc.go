@@ -8,6 +8,8 @@ import (
 	"log"
 	"os"
 	"path"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -200,10 +202,12 @@ func updateDBCategories(m *map[string]int) {
 func rmProductsNotSel() {
 	// Get distinct categories from products on db.
 	dbCategs := []string{}
-	err := dbAldo.Select(&dbCategs, "SELECT distinct category FROM product")
-	if err != nil {
-		log.Fatal(fmt.Errorf("Get distinct categories from db. %v", err))
-	}
+	stmGet := "SELECT distinct category FROM product"
+	err := dbAldo.Select(&dbCategs, stmGet)
+	checkFatalSQLError(err, stmGet)
+	// if err != nil {
+	// log.Fatal(fmt.Errorf("Get distinct categories from db. %v", err))
+	// }
 	// Categories to be removed.
 	categToRem := []string{}
 	for _, dbCateg := range dbCategs {
@@ -222,20 +226,23 @@ func rmProductsNotSel() {
 	// tx.MustExec(fmt.Sprintf("INSERT INTO product_history SELECT * FROM product WHERE category IN (%s)", strings.Join(categToRem, ",")))
 	stmInsert := fmt.Sprintf("INSERT INTO product_history SELECT * FROM product WHERE category IN (%s)", strings.Join(categToRem, ","))
 	_, err = tx.Exec(stmInsert)
-	if err != nil {
-		log.Fatal(fmt.Errorf("Inserting into product_history. stm: %s. %v", stmInsert, err))
-	}
+	checkFatalSQLError(err, stmInsert)
+	// if err != nil {
+	// log.Fatal(fmt.Errorf("[ERROR] Inserting into product_history. stm: %s. %v", stmInsert, err))
+	// }
 	// Delete copied products.
 	// tx.MustExec(fmt.Sprintf("DELETE FROM product WHERE category IN (%s)", strings.Join(categToRem, ",")))
 	stmRemove := fmt.Sprintf("DELETE FROM product WHERE category IN (%s)", strings.Join(categToRem, ","))
 	_, err = tx.Exec(stmRemove)
-	if err != nil {
-		log.Fatal(fmt.Errorf("Deleting product. stm: %s. %v", stmRemove, err))
-	}
+	checkFatalSQLError(err, stmRemove)
+	// if err != nil {
+	// log.Fatal(fmt.Errorf("Deleting product. stm: %s. %v", stmRemove, err))
+	// }
 	err = tx.Commit()
-	if err != nil {
-		log.Fatal(fmt.Errorf("Committing: %v\n%s\n%s", err, stmInsert, stmRemove))
-	}
+	checkFatalSQLError(err, stmInsert+"\n"+stmRemove)
+	// if err != nil {
+	// log.Fatal(fmt.Errorf("Committing: %v\n%s\n%s", err, stmInsert, stmRemove))
+	// }
 }
 
 // Remove products with price out of defined range.
@@ -245,25 +252,61 @@ func rmProductsPriceOutOfRange() {
 	// tx.MustExec(fmt.Sprintf("INSERT INTO product_history SELECT * FROM product WHERE dealer_price NOT BETWEEN (%d) AND (%d)", minPriceFilter, maxPriceFilter))
 	stmInsert := fmt.Sprintf("INSERT INTO product_history SELECT * FROM product WHERE dealer_price NOT BETWEEN (%d) AND (%d)", minPriceFilter, maxPriceFilter)
 	_, err := tx.Exec(stmInsert)
-	if err != nil {
-		log.Fatal(fmt.Errorf("Inserting into product_history. stm: %s. %v", stmInsert, err))
-	}
+	checkFatalSQLError(err, stmInsert)
+	// if err != nil {
+	// log.Fatal(fmt.Errorf("Inserting into product_history. stm: %s. %v", stmInsert, err))
+	// }
 	// Delete copied products.
 	// result := tx.MustExec(fmt.Sprintf("DELETE FROM product WHERE dealer_price NOT BETWEEN (%d) AND (%d)", minPriceFilter, maxPriceFilter))
 	stmRemove := fmt.Sprintf(fmt.Sprintf("DELETE FROM product WHERE dealer_price NOT BETWEEN (%d) AND (%d)", minPriceFilter, maxPriceFilter))
 	result, err := tx.Exec(stmRemove)
-	if err != nil {
-		log.Fatal(fmt.Errorf("Removing product. stm: %s. %v", stmRemove, err))
-	}
+	checkFatalSQLError(err, stmRemove)
+	// if err != nil {
+	// log.Fatal(fmt.Errorf("Removing product. stm: %s. %v", stmRemove, err))
+	// }
 	err = tx.Commit()
-	if err != nil {
-		log.Fatal(fmt.Errorf("Committing: %v\n%s\n%s", err, stmInsert, stmRemove))
-	}
+	checkFatalSQLError(err, stmInsert+"\n"+stmRemove)
+	// if err != nil {
+	// log.Fatal(fmt.Errorf("Committing: %v\n%s\n%s", err, stmInsert, stmRemove))
+	// }
 	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		log.Fatal(fmt.Errorf("Getting rows affected. %v", err))
-	}
+	checkFatalSQLError(err, stmInsert+"\n"+stmRemove)
+	// if err != nil {
+	// log.Fatal(fmt.Errorf("Getting rows affected. %v", err))
+	// }
 	if rowsAffected > 0 {
 		log.Printf("Removed %v product(s) with price out of range", rowsAffected)
+	}
+}
+
+/**************************************************************************************************
+* ERROS
+**************************************************************************************************/
+func checkError(err error) bool {
+	if err != nil {
+		// notice that we're using 1, so it will actually log where
+		// the error happened, 0 = this function, we don't want that.
+		function, file, line, _ := runtime.Caller(1)
+		log.Printf("[error] [%s] [%s:%d] %v", filepath.Base(file), runtime.FuncForPC(function).Name(), line, err)
+		return true
+	}
+	return false
+}
+
+func checkFatalError(err error) {
+	if err != nil {
+		// notice that we're using 1, so it will actually log where
+		// the error happened, 0 = this function, we don't want that.
+		function, file, line, _ := runtime.Caller(1)
+		log.Fatalf("[error] [%s] [%s:%d] %v", filepath.Base(file), runtime.FuncForPC(function).Name(), line, err)
+	}
+}
+
+func checkFatalSQLError(err error, stm string) {
+	if err != nil {
+		// notice that we're using 1, so it will actually log where
+		// the error happened, 0 = this function, we don't want that.
+		function, file, line, _ := runtime.Caller(1)
+		log.Fatalf("[error] [%s] [%s:%d] %v\n%s", filepath.Base(file), runtime.FuncForPC(function).Name(), line, err, stm)
 	}
 }
