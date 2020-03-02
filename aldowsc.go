@@ -66,7 +66,7 @@ func init() {
 
 	// Filters.
 	// minPriceFilter, err = currency.Parse("1.400,00", ",")
-	minPriceFilter, err = currency.Parse("50,00", ",")
+	minPriceFilter, err = currency.Parse("1050,00", ",")
 	if err != nil {
 		panic(err)
 	}
