@@ -18,12 +18,15 @@ CREATE TABLE IF NOT EXISTS category (
 );
 
 -- Products.
-CREATE TABLE IF NOT EXISTS product_new (
+CREATE TABLE IF NOT EXISTS product (
+	id						INTEGER PRIMARY KEY AUTOINCREMENT,	-- Internal id.
 	mongodb_id				TEXT DEFAULT "",	-- Store id from mongodb.
 	code                    TEXT NOT NULL UNIQUE,	-- Come from dealer.
 	brand                   TEXT NOT NULL,
 	category                TEXT NOT NULL,
 	description             TEXT NOT NULL,
+	--  unit                    TEXT NOT NULL,
+	--  multiple                INTEGER NOT NULL,
 	dealer_price            INTEGER NOT NULL,
 	suggestion_price        INTEGER NOT NULL,
 	technical_description   TEXT NOT NULL,
@@ -45,12 +48,15 @@ CREATE TABLE IF NOT EXISTS product_new (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_product_code ON product(code);
 
 -- Products history.
-CREATE TABLE IF NOT EXISTS product_history_new (
+CREATE TABLE IF NOT EXISTS product_history (
+	id						INTEGER PRIMARY KEY AUTOINCREMENT,	-- Internal id.
 	mongodb_id				TEXT DEFAULT "",	-- Store id from mongodb.
 	code					TEXT NOT NULL,	-- Come from dealer.
 	brand                   TEXT NOT NULL,
 	category                TEXT NOT NULL,
 	description             TEXT NOT NULL,
+	--  unit                    TEXT NOT NULL,
+	--  multiple                INTEGER NOT NULL,
 	dealer_price            INTEGER NOT NULL,
 	suggestion_price        REAL NOT NULL,
 	technical_description   TEXT NOT NULL,
