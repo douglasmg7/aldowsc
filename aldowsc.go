@@ -219,12 +219,22 @@ func rmProductsNotSel() {
 
 	// Copy products to remove to history.
 	tx := dbAldo.MustBegin()
-	tx.MustExec(fmt.Sprintf("INSERT INTO product_history SELECT * FROM product WHERE category IN (%s)", strings.Join(categToRem, ",")))
+	// tx.MustExec(fmt.Sprintf("INSERT INTO product_history SELECT * FROM product WHERE category IN (%s)", strings.Join(categToRem, ",")))
+	stmInsert := fmt.Sprintf("INSERT INTO product_history SELECT * FROM product WHERE category IN (%s)", strings.Join(categToRem, ","))
+	_, err = tx.Exec(stmInsert)
+	if err != nil {
+		log.Fatal(fmt.Errorf("Inserting into product_history. stm: %s. %v", stmInsert, err))
+	}
 	// Delete copied products.
-	tx.MustExec(fmt.Sprintf("DELETE FROM product WHERE category IN (%s)", strings.Join(categToRem, ",")))
+	// tx.MustExec(fmt.Sprintf("DELETE FROM product WHERE category IN (%s)", strings.Join(categToRem, ",")))
+	stmRemove := fmt.Sprintf("DELETE FROM product WHERE category IN (%s)", strings.Join(categToRem, ","))
+	_, err = tx.Exec(stmRemove)
+	if err != nil {
+		log.Fatal(fmt.Errorf("Deleting product. stm: %s. %v", stmRemove, err))
+	}
 	err = tx.Commit()
 	if err != nil {
-		log.Fatal(fmt.Errorf("Removing products from db: %v", err))
+		log.Fatal(fmt.Errorf("Committing: %v\n%s\n%s", err, stmInsert, stmRemove))
 	}
 }
 
@@ -232,17 +242,26 @@ func rmProductsNotSel() {
 func rmProductsPriceOutOfRange() {
 	// Copy products to remove to history.
 	tx := dbAldo.MustBegin()
-	// tx.MustExec(fmt.Sprintf("INSERT INTO product_history SELECT * FROM product WHERE category IN (%s)", strings.Join(categToRem, ",")))
-	tx.MustExec(fmt.Sprintf("INSERT INTO product_history SELECT * FROM product WHERE dealer_price NOT BETWEEN (%d) AND (%d)", minPriceFilter, maxPriceFilter))
-	// Delete copied products.
-	result := tx.MustExec(fmt.Sprintf("DELETE FROM product WHERE dealer_price NOT BETWEEN (%d) AND (%d)", minPriceFilter, maxPriceFilter))
-	err := tx.Commit()
+	// tx.MustExec(fmt.Sprintf("INSERT INTO product_history SELECT * FROM product WHERE dealer_price NOT BETWEEN (%d) AND (%d)", minPriceFilter, maxPriceFilter))
+	stmInsert := fmt.Sprintf("INSERT INTO product_history SELECT * FROM product WHERE dealer_price NOT BETWEEN (%d) AND (%d)", minPriceFilter, maxPriceFilter)
+	_, err := tx.Exec(stmInsert)
 	if err != nil {
-		log.Fatal(fmt.Errorf("Removing products from db: %v", err))
+		log.Fatal(fmt.Errorf("Inserting into product_history. stm: %s. %v", stmInsert, err))
+	}
+	// Delete copied products.
+	// result := tx.MustExec(fmt.Sprintf("DELETE FROM product WHERE dealer_price NOT BETWEEN (%d) AND (%d)", minPriceFilter, maxPriceFilter))
+	stmRemove := fmt.Sprintf(fmt.Sprintf("DELETE FROM product WHERE dealer_price NOT BETWEEN (%d) AND (%d)", minPriceFilter, maxPriceFilter))
+	result, err := tx.Exec(stmRemove)
+	if err != nil {
+		log.Fatal(fmt.Errorf("Removing product. stm: %s. %v", stmRemove, err))
+	}
+	err = tx.Commit()
+	if err != nil {
+		log.Fatal(fmt.Errorf("Committing: %v\n%s\n%s", err, stmInsert, stmRemove))
 	}
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		log.Fatal(fmt.Errorf("Removing products from db: %v", err))
+		log.Fatal(fmt.Errorf("Getting rows affected. %v", err))
 	}
 	if rowsAffected > 0 {
 		log.Printf("Removed %v product(s) with price out of range", rowsAffected)
