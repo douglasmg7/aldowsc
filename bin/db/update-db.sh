@@ -17,6 +17,4 @@ DB=$ZUNKAPATH/db/$ZUNKA_ALDOWSC_DB
 # Updating db.
 echo Updating $DB
 sqlite3 $DB < $(dirname $0)/tables.sql
-sqlite3 $DB < $(dirname $0)/copy-old-to-new.sql
-
-
+sqlite3 $DB < $(dirname $0)/update-tables.sql

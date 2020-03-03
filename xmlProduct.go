@@ -226,7 +226,6 @@ func (doc *xmlDoc) process() (err error) {
 				log.Fatal(err)
 			}
 			// Update changed product.
-			product.Id = dbProduct.Id
 			product.CreatedAt = dbProduct.CreatedAt
 			product.ChangedAt = time.Now()
 			product.Changed = true
