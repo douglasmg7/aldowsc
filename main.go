@@ -163,11 +163,10 @@ func main() {
 	// Processing products.
 	log.Println("Processing products...")
 	timer = time.Now()
+
 	err = aldoXMLDoc.process()
 	log.Printf("Time processing products: %fs", time.Since(timer).Seconds())
-	if err != nil {
-		log.Fatal(err)
-	}
+	checkFatalError(err)
 
 	log.Printf("Finish\n\n")
 }

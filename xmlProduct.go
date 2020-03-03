@@ -206,9 +206,7 @@ func (doc *xmlDoc) process() (err error) {
 			product.ChangedAt = product.CreatedAt
 			// fmt.Println("Inserted product:", product.Code)
 			err = product.Save(db)
-			if err != nil {
-				log.Fatal(err)
-			}
+			checkFatalError(err)
 			continue
 		}
 
@@ -222,17 +220,13 @@ func (doc *xmlDoc) process() (err error) {
 			// fmt.Println("productDb ChangedAt:", dbProduct.ChangedAt)
 			// Save product history.
 			err = dbProduct.SaveHistory(db)
-			if err != nil {
-				log.Fatal(err)
-			}
+			checkFatalError(err)
 			// Update changed product.
 			product.CreatedAt = dbProduct.CreatedAt
 			product.ChangedAt = time.Now()
 			product.Changed = true
 			err = product.Update(db)
-			if err != nil {
-				log.Fatal(err)
-			}
+			checkFatalError(err)
 			log.Println("Product changed", product.Code)
 		}
 	}
