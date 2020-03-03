@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
 	"time"
@@ -23,8 +24,7 @@ import (
 	// _ "code.google.com/p/go-charset/data"
 )
 
-var db *sql.DB
-var dbAldo *sqlx.DB
+var db *sqlx.DB
 
 // Paths.
 var appPath, logPath, dbPath, xmlPath string
@@ -40,6 +40,9 @@ var dev bool
 
 // Categories selected to use, key is the name for category.
 var selectedCategories map[string]aldoutil.Category
+
+// Insert product statment.
+var stmInsertProduct, stmInsertProductHistory, stmSelectProductByCode, stmDeleteProductByCode string
 
 func init() {
 	// Path.
@@ -87,6 +90,12 @@ func init() {
 	// log.SetFlags(log.LstdFlags | log.Ldate | log.Lshortfile)
 	// log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 
+	// Statments.
+	stmInsertProduct = createStmInsertProduct(&aldoutil.Product{}, "")
+	stmInsertProductHistory = createStmInsertProduct(&aldoutil.Product{}, "product_history")
+	stmSelectProductByCode = "SELECT * FROM product WHERE code=?"
+	stmDeleteProductByCode = "DELETE FROM product WHERE code=?"
+
 	// Run mode.
 	mode := "production"
 	if len(os.Args) > 1 && strings.HasPrefix(os.Args[1], "dev") {
@@ -101,24 +110,13 @@ func init() {
 func main() {
 	var err error
 
-	// Db start.
-	db, err = sql.Open("sqlite3", dbAldoFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = db.Ping()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
 	// Init db Aldo.
-	dbAldo = sqlx.MustConnect("sqlite3", dbAldoFile)
+	db = sqlx.MustConnect("sqlite3", dbAldoFile)
 
 	// Getting selected categories.
 	log.Println("Reading selected categories from db...")
 	selectedCategoriesArray := []aldoutil.Category{}
-	err = dbAldo.Select(&selectedCategoriesArray, "SELECT * FROM category where selected=true")
+	err = db.Select(&selectedCategoriesArray, "SELECT * FROM category where selected=true")
 	if err != nil {
 		log.Fatalln("Getting categories from db:", err)
 	}
@@ -193,7 +191,7 @@ func updateDBCategories(m *map[string]int) {
 		// fmt.Printf("text: %s\n", text)
 		// fmt.Printf("productsQty: %v\n", quantity)
 		// fmt.Printf("selected: %v\n", false)
-		dbAldo.MustExec(fmt.Sprintf("INSERT INTO category(name, text, products_qty, selected) VALUES(\"%s\", \"%s\", %v, %v) ON CONFLICT(name) DO UPDATE SET products_qty=excluded.products_qty", name, text, quantity, false))
+		db.MustExec(fmt.Sprintf("INSERT INTO category(name, text, products_qty, selected) VALUES(\"%s\", \"%s\", %v, %v) ON CONFLICT(name) DO UPDATE SET products_qty=excluded.products_qty", name, text, quantity, false))
 	}
 }
 
@@ -202,7 +200,7 @@ func rmProductsNotSel() {
 	// Get distinct categories from products on db.
 	dbCategs := []string{}
 	stmGet := "SELECT distinct category FROM product"
-	err := dbAldo.Select(&dbCategs, stmGet)
+	err := db.Select(&dbCategs, stmGet)
 	checkFatalSQLError(err, stmGet)
 	// if err != nil {
 	// log.Fatal(fmt.Errorf("Get distinct categories from db. %v", err))
@@ -221,7 +219,7 @@ func rmProductsNotSel() {
 	}
 
 	// Copy products to remove to history.
-	tx := dbAldo.MustBegin()
+	tx := db.MustBegin()
 	// tx.MustExec(fmt.Sprintf("INSERT INTO product_history SELECT * FROM product WHERE category IN (%s)", strings.Join(categToRem, ",")))
 	stmInsert := fmt.Sprintf("INSERT INTO product_history SELECT * FROM product WHERE category IN (%s)", strings.Join(categToRem, ","))
 	_, err = tx.Exec(stmInsert)
@@ -247,7 +245,7 @@ func rmProductsNotSel() {
 // Remove products with price out of defined range.
 func rmProductsPriceOutOfRange() {
 	// Copy products to remove to history.
-	tx := dbAldo.MustBegin()
+	tx := db.MustBegin()
 	// tx.MustExec(fmt.Sprintf("INSERT INTO product_history SELECT * FROM product WHERE dealer_price NOT BETWEEN (%d) AND (%d)", minPriceFilter, maxPriceFilter))
 	stmInsert := fmt.Sprintf("INSERT INTO product_history SELECT * FROM product WHERE dealer_price NOT BETWEEN (%d) AND (%d)", minPriceFilter, maxPriceFilter)
 	_, err := tx.Exec(stmInsert)
@@ -279,6 +277,57 @@ func rmProductsPriceOutOfRange() {
 }
 
 /**************************************************************************************************
+* Create SQL statments.
+**************************************************************************************************/
+// Create insert statment for porduct struct.
+func createStmInsertProduct(p interface{}, tableName string) string {
+	// p := &aldoutil.Product{}
+	var dbFieldNameS []string
+	var dbFieldNameColonS []string
+
+	if tableName == "" {
+		if t := reflect.TypeOf(p); t.Kind() == reflect.Ptr {
+			tableName = strings.ToLower(t.Elem().Name())
+		} else {
+			tableName = strings.ToLower(t.Name())
+		}
+	}
+
+	val := reflect.ValueOf(p).Elem()
+	for i := 0; i < val.NumField(); i++ {
+		fieldType := val.Type().Field(i)
+		dbFieldName := fieldType.Tag.Get("db")
+		dbFieldNameS = append(dbFieldNameS, dbFieldName)
+		dbFieldNameColonS = append(dbFieldNameColonS, ":"+dbFieldName)
+	}
+	return "INSERT INTO " + tableName + " (" + strings.Join(dbFieldNameS, ", ") + ") VALUES (" + strings.Join(dbFieldNameColonS, ", ") + ")"
+}
+
+// Create update statment for porduct struct.
+func createStmUpdateProduct(p interface{}, tableName string) string {
+	// p := &aldoutil.Product{}
+	var dbFieldNameS []string
+	var dbFieldNameColonS []string
+
+	if tableName == "" {
+		if t := reflect.TypeOf(p); t.Kind() == reflect.Ptr {
+			tableName = strings.ToLower(t.Elem().Name())
+		} else {
+			tableName = strings.ToLower(t.Name())
+		}
+	}
+
+	val := reflect.ValueOf(p).Elem()
+	for i := 0; i < val.NumField(); i++ {
+		fieldType := val.Type().Field(i)
+		dbFieldName := fieldType.Tag.Get("db")
+		dbFieldNameS = append(dbFieldNameS, dbFieldName)
+		dbFieldNameColonS = append(dbFieldNameColonS, ":"+dbFieldName)
+	}
+	return "UPDATE INTO " + tableName + " (" + strings.Join(dbFieldNameS, ", ") + ") VALUES (" + strings.Join(dbFieldNameColonS, ", ") + ")"
+}
+
+/**************************************************************************************************
 * ERROS
 **************************************************************************************************/
 func checkError(err error) bool {
@@ -302,7 +351,7 @@ func checkFatalError(err error) {
 }
 
 func checkFatalSQLError(err error, stm string) {
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		// notice that we're using 1, so it will actually log where
 		// the error happened, 0 = this function, we don't want that.
 		function, file, line, _ := runtime.Caller(1)

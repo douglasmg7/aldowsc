@@ -191,22 +191,19 @@ func (doc *xmlDoc) process() (err error) {
 
 		// Get product from db.
 		dbProduct := aldoutil.Product{}
-		err = dbProduct.FindByCode(db, product.Code)
-
-		// Error.
-		if err != nil && err != sql.ErrNoRows {
-			log.Fatal(err)
-		}
+		err = db.Get(&dbProduct, stmSelectProductByCode, product.Code)
+		checkFatalSQLError(err, stmSelectProductByCode)
 
 		// New product.
 		if err == sql.ErrNoRows {
-			// log.Println("Inserting:", product.Code)
 			product.New = true
 			product.CreatedAt = time.Now()
 			product.ChangedAt = product.CreatedAt
-			// fmt.Println("Inserted product:", product.Code)
-			err = product.Save(db)
-			checkFatalError(err)
+
+			// Insert product.
+			_, err = db.NamedExec(stmInsertProduct, &product)
+			checkFatalSQLError(err, stmInsertProduct)
+			log.Println("Inserted product:", product.Code)
 			continue
 		}
 
@@ -218,15 +215,19 @@ func (doc *xmlDoc) process() (err error) {
 			// fmt.Println("productDb change:", dbProduct.Changed)
 			// fmt.Println("productDb CreatedAt:", dbProduct.CreatedAt)
 			// fmt.Println("productDb ChangedAt:", dbProduct.ChangedAt)
-			// Save product history.
-			err = dbProduct.SaveHistory(db)
-			checkFatalError(err)
+
+			// Insert into product history.
+			_, err = db.NamedExec(stmInsertProductHistory, &dbProduct)
+			checkFatalSQLError(err, stmInsertProductHistory)
+
 			// Update changed product.
 			product.CreatedAt = dbProduct.CreatedAt
 			product.ChangedAt = time.Now()
 			product.Changed = true
-			err = product.Update(db)
-			checkFatalError(err)
+
+			// todo
+			// err = product.Update(db)
+			// checkFatalError(err)
 			log.Println("Product changed", product.Code)
 		}
 	}
