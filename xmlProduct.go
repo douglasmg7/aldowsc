@@ -60,6 +60,8 @@ func (doc *xmlDoc) process() (err error) {
 			prodcutQtyCutByCategFilter++
 			continue
 		}
+		// log.Printf("After filter by category: %s\n", xmlProduct.Code)
+
 		product := aldoutil.Product{}
 		// Categories.
 		product.Category = xmlProduct.Category
@@ -95,6 +97,7 @@ func (doc *xmlDoc) process() (err error) {
 
 		// Code.
 		product.Code = xmlProduct.Code
+		// log.Printf("After get code: %s\n", product.Code)
 
 		// Brands.
 		product.Brand = xmlProduct.Brand
@@ -191,8 +194,12 @@ func (doc *xmlDoc) process() (err error) {
 
 		// Get product from db.
 		dbProduct := aldoutil.Product{}
-		err = db.Get(&dbProduct, stmSelectProductByCode, product.Code)
-		checkFatalSQLError(err, stmSelectProductByCode)
+		err = db.Get(&dbProduct, stmProductSelectByCode, product.Code)
+		checkFatalSQLError(err, stmProductSelectByCode)
+
+		// Log code.
+		// log.Printf("product code: %s\n", product.Code)
+		// log.Printf("product db code: %s\n", dbProduct.Code)
 
 		// New product.
 		if err == sql.ErrNoRows {
@@ -201,14 +208,16 @@ func (doc *xmlDoc) process() (err error) {
 			product.ChangedAt = product.CreatedAt
 
 			// Insert product.
-			_, err = db.NamedExec(stmInsertProduct, &product)
-			checkFatalSQLError(err, stmInsertProduct)
+			_, err = db.NamedExec(stmProductInsert, &product)
+			checkFatalSQLError(err, stmProductInsert)
 			log.Println("Inserted product:", product.Code)
 			continue
 		}
 
 		// Product already exist.
 		// fmt.Println("Product found on db:", dbProduct.Code)
+		// log.Printf("product code: %s\n", product.DealerPrice)
+		// log.Printf("product db code: %s\n", dbProduct.DealerPrice)
 
 		// Product changed.
 		if product.Diff(&dbProduct) {
@@ -216,18 +225,25 @@ func (doc *xmlDoc) process() (err error) {
 			// fmt.Println("productDb CreatedAt:", dbProduct.CreatedAt)
 			// fmt.Println("productDb ChangedAt:", dbProduct.ChangedAt)
 
-			// Insert into product history.
-			_, err = db.NamedExec(stmInsertProductHistory, &dbProduct)
-			checkFatalSQLError(err, stmInsertProductHistory)
+			// Begin transaction.
+			tx, err := db.Beginx()
+			checkFatalError(err)
+
+			// Insert db product into product history.
+			_, err = tx.NamedExec(stmProductHistoryInsert, &dbProduct)
+			checkFatalSQLError(err, stmProductHistoryInsert)
 
 			// Update changed product.
 			product.CreatedAt = dbProduct.CreatedAt
 			product.ChangedAt = time.Now()
 			product.Changed = true
+			_, err = tx.NamedExec(stmProductUpdateByCode, &product)
+			checkFatalSQLError(err, stmProductUpdateByCode)
 
-			// todo
-			// err = product.Update(db)
-			// checkFatalError(err)
+			// Commit.
+			err = tx.Commit()
+			checkFatalError(err)
+
 			log.Println("Product changed", product.Code)
 		}
 	}

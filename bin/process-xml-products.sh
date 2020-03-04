@@ -11,7 +11,9 @@ cd ..
 FILE=$ZUNKAPATH/xml/aldo/aldo-products-substitution.xml
 
 if [[ $1 == dev ]]; then
-    go run *.go dev < $FILE
+    go build
+    ./aldowsc dev < $FILE
+    # go run *.go dev < $FILE
 else
     aldowsc < $FILE
 fi

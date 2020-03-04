@@ -23,8 +23,18 @@ func setupTest() {
 func shutdownTest() {
 }
 
-func Test_CreateInsertProductQuery(t *testing.T) {
-	result := createStmInsertProduct(&aldoutil.Product{}, "")
+// Create satment insert product.
+func Test_CreateStmInsertProduct(t *testing.T) {
+	result := createStmInsert(&aldoutil.Product{}, "")
+	// log.Println(result)
+	if result == "" {
+		t.Errorf("Received a empty string, want some string")
+	}
+}
+
+// Create statement update product.
+func Test_CreateStmUpdateProductByCode(t *testing.T) {
+	result := createStmUpdateByCode(&aldoutil.Product{}, "")
 	log.Println(result)
 	if result == "" {
 		t.Errorf("Received a empty string, want some string")
