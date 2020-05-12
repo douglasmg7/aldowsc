@@ -1,3 +1,11 @@
+Página do produto:
+    Nâo mostrar novo depois de um tempo ou quando produto já cadastrado.
+    Produto quando modificado está perdendo o mongodb id.
+
+Quando produto tem o preço alterado, o mesmo tem que ser alterado no zunkasite.
+
+
+
 Log all using log instead of fmt.
 Log num of products changed.
 

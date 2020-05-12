@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS category (
 );
 
 -- Products.
-CREATE TABLE IF NOT EXISTS product_new (
+CREATE TABLE IF NOT EXISTS product (
 	mongodb_id				TEXT DEFAULT "",	-- Store id from mongodb.
 	code                    TEXT NOT NULL UNIQUE,	-- Come from dealer.
 	brand                   TEXT NOT NULL,
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS product_new (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_product_code ON product(code);
 
 -- Products history.
-CREATE TABLE IF NOT EXISTS product_history_new (
+CREATE TABLE IF NOT EXISTS product_history (
 	mongodb_id				TEXT DEFAULT "",	-- Store id from mongodb.
 	code					TEXT NOT NULL,	-- Come from dealer.
 	brand                   TEXT NOT NULL,

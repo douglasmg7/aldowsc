@@ -236,6 +236,7 @@ func (doc *xmlDoc) process() (err error) {
 			// Update changed product.
 			product.CreatedAt = dbProduct.CreatedAt
 			product.ChangedAt = time.Now()
+			product.MongodbId = dbProduct.MongodbId
 			product.Changed = true
 			_, err = tx.NamedExec(stmProductUpdateByCode, &product)
 			checkFatalSQLError(err, stmProductUpdateByCode)
