@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS param (
 	value                   TEXT
 );
 
--- Categories.
+-- Products.
 CREATE TABLE IF NOT EXISTS category (
 	name                    TEXT PRIMARY KEY,	-- Name without space.
 	text                    TEXT NOT NULL,
@@ -21,7 +21,6 @@ CREATE TABLE IF NOT EXISTS category (
 CREATE TABLE IF NOT EXISTS product (
 	mongodb_id				TEXT DEFAULT "",	-- Store id from mongodb.
 	code                    TEXT NOT NULL UNIQUE,	-- Come from dealer.
-    store_product_id		INTEGER,
 	brand                   TEXT NOT NULL,
 	category                TEXT NOT NULL,
 	description             TEXT NOT NULL,
@@ -38,8 +37,11 @@ CREATE TABLE IF NOT EXISTS product (
 	rma_procedure           TEXT,
 	created_at              DATE NOT NULL,
 	changed_at              DATE NOT NULL,
-	removed_at              DATE,
-    checked_change          BOOLEAN DEFAULT 0
+	changed                 BOOLEAN NOT NULL,
+	new                     BOOLEAN NOT NULL,
+	removed                 BOOLEAN NOT NULL,
+    store_product_id		INTEGER,
+    checked_change          BOOLEAN DEFAULT 0,
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_product_code ON product(code);
 
@@ -47,7 +49,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_product_code ON product(code);
 CREATE TABLE IF NOT EXISTS product_history (
 	mongodb_id				TEXT DEFAULT "",	-- Store id from mongodb.
 	code					TEXT NOT NULL,	-- Come from dealer.
-	store_product_id		INTEGER,
 	brand                   TEXT NOT NULL,
 	category                TEXT NOT NULL,
 	description             TEXT NOT NULL,
@@ -64,8 +65,10 @@ CREATE TABLE IF NOT EXISTS product_history (
 	rma_procedure           TEXT,
 	created_at              DATE NOT NULL,
 	changed_at              DATE NOT NULL,
-	removed_at              DATE,
-    checked_change          BOOLEAN DEFAULT 0,
+	changed                 BOOLEAN NOT NULL,
+	new                     BOOLEAN NOT NULL,
+	removed                 BOOLEAN NOT NULL,
+	store_product_id		INTEGER,
 	UNIQUE (code, changed_at)
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_product_history_code_changed_at ON product_history(code, changed_at);

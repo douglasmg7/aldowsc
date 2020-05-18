@@ -1,0 +1,16 @@
+https://www.sqlite.org/faq.html#q11
+
+(11) How do I add or delete columns from an existing table in SQLite.
+
+SQLite has limited ALTER TABLE support that you can use to add a column to the end of a table or to change the name of a table. If you want to make more complex changes in the structure of a table, you will have to recreate the table. You can save existing data to a temporary table, drop the old table, create the new table, then copy the data back in from the temporary table.
+
+For example, suppose you have a table named "t1" with columns names "a", "b", and "c" and that you want to delete column "c" from this table. The following steps illustrate how this could be done:
+
+BEGIN TRANSACTION;
+CREATE TEMPORARY TABLE t1_backup(a,b);
+INSERT INTO t1_backup SELECT a,b FROM t1;
+DROP TABLE t1;
+CREATE TABLE t1(a,b);
+INSERT INTO t1 SELECT a,b FROM t1_backup;
+DROP TABLE t1_backup;
+COMMIT;
