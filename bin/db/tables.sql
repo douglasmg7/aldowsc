@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS product (
 	created_at              DATE NOT NULL,
 	changed_at              DATE NOT NULL,
 	removed_at              DATE,
-    checked_change          BOOLEAN DEFAULT 0
+    status_cleaned_at       DATE 
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_product_code ON product(code);
 
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS product_history (
 	created_at              DATE NOT NULL,
 	changed_at              DATE NOT NULL,
 	removed_at              DATE,
-    checked_change          BOOLEAN DEFAULT 0,
+    status_cleaned_at       DATE,
 	UNIQUE (code, changed_at)
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_product_history_code_changed_at ON product_history(code, changed_at);

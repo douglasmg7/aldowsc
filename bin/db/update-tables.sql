@@ -105,7 +105,7 @@ CREATE TABLE product (
 	created_at              DATE NOT NULL,
 	changed_at              DATE NOT NULL,
 	removed_at              DATE,
-    checked_change          BOOLEAN DEFAULT 0
+    status_cleaned_at       DATE 
 );
 CREATE UNIQUE INDEX idx_product_code ON product(code);
 
@@ -246,7 +246,7 @@ FROM product_history;
 DROP TABLE product_history;
 
 -- Create new table.
-CREATE TABLE IF NOT EXISTS product_history (
+CREATE TABLE product_history (
 	mongodb_id				TEXT DEFAULT "",	-- Store id from mongodb.
 	code					TEXT NOT NULL,	-- Come from dealer.
 	store_product_id		INTEGER,
@@ -267,7 +267,7 @@ CREATE TABLE IF NOT EXISTS product_history (
 	created_at              DATE NOT NULL,
 	changed_at              DATE NOT NULL,
 	removed_at              DATE,
-    checked_change          BOOLEAN DEFAULT 0,
+    status_cleaned_at       DATE,
 	UNIQUE (code, changed_at)
 );
 CREATE UNIQUE INDEX idx_product_history_code_changed_at ON product_history(code, changed_at);
