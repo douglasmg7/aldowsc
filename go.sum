@@ -2,6 +2,8 @@ github.com/douglasmg7/aldoutil v0.5.0 h1:b82VjO/8YH5Fj6LQ9HRmLLgsIwDNit1nAjCI8uQ
 github.com/douglasmg7/aldoutil v0.5.0/go.mod h1:/zDTPhv6Te482Sflqi/XkahzZCzqCvoBzhTH6gxPGTE=
 github.com/douglasmg7/aldoutil v1.0.0 h1:QnYHg4PJWwZ1nlEtX89GUb31rV3N1vCFBwaDiNR7CXo=
 github.com/douglasmg7/aldoutil v1.0.0/go.mod h1:dXPQJ7Yo1CkgXGzPL3cH3NmjjvvQdi23xVjUMP3ho8k=
+github.com/douglasmg7/aldoutil v1.1.0 h1:P7KGfb6g6AVc182ejwJu5nRXHdve9pTu7nwYrZrY1wA=
+github.com/douglasmg7/aldoutil v1.1.0/go.mod h1:dXPQJ7Yo1CkgXGzPL3cH3NmjjvvQdi23xVjUMP3ho8k=
 github.com/douglasmg7/currency v0.2.0 h1:gnGRRs/mX/rh8EcIeCEY7UeUREDAry9B9B+AP2S/AjY=
 github.com/douglasmg7/currency v0.2.0/go.mod h1:x4jugV2eqtcVcF0gn7aJ7RORWcuYW5N/f6S2v4phBL8=
 github.com/go-sql-driver/mysql v1.4.0/go.mod h1:zAC/RDZ24gD3HViQzih4MyKcchzm+sOG5ZlKdlhCg5w=
