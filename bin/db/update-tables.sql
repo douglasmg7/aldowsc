@@ -104,8 +104,8 @@ CREATE TABLE product (
 	rma_procedure           TEXT,
 	created_at              DATE NOT NULL,
 	changed_at              DATE NOT NULL,
-	removed_at              DATE,
-    status_cleaned_at       DATE 
+	removed_at              DATE DEFAULT "0001-01-01 00:00:00+00:00",
+    status_cleaned_at       DATE DEFAULT "0001-01-01 00:00:00+00:00"
 );
 CREATE UNIQUE INDEX idx_product_code ON product(code);
 
@@ -266,8 +266,8 @@ CREATE TABLE product_history (
 	rma_procedure           TEXT,
 	created_at              DATE NOT NULL,
 	changed_at              DATE NOT NULL,
-	removed_at              DATE,
-    status_cleaned_at       DATE,
+	removed_at              DATE DEFAULT "0001-01-01 00:00:00+00:00",
+    status_cleaned_at       DATE DEFAULT "0001-01-01 00:00:00+00:00",
 	UNIQUE (code, changed_at)
 );
 CREATE UNIQUE INDEX idx_product_history_code_changed_at ON product_history(code, changed_at);
