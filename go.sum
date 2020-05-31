@@ -6,6 +6,10 @@ github.com/douglasmg7/aldoutil v1.1.0 h1:P7KGfb6g6AVc182ejwJu5nRXHdve9pTu7nwYrZr
 github.com/douglasmg7/aldoutil v1.1.0/go.mod h1:dXPQJ7Yo1CkgXGzPL3cH3NmjjvvQdi23xVjUMP3ho8k=
 github.com/douglasmg7/currency v0.2.0 h1:gnGRRs/mX/rh8EcIeCEY7UeUREDAry9B9B+AP2S/AjY=
 github.com/douglasmg7/currency v0.2.0/go.mod h1:x4jugV2eqtcVcF0gn7aJ7RORWcuYW5N/f6S2v4phBL8=
+github.com/douglasmg7/currency v0.2.1 h1:qRyf/c+4YexyePeXd3/Z/Shv0fayPR8aintD2cv+W6s=
+github.com/douglasmg7/currency v0.2.1/go.mod h1:x4jugV2eqtcVcF0gn7aJ7RORWcuYW5N/f6S2v4phBL8=
+github.com/douglasmg7/currency v0.2.2 h1:r8zAIDTxzPFEKGf50mJGDDdVWYAojLkw46vDLQSbCI4=
+github.com/douglasmg7/currency v0.2.2/go.mod h1:x4jugV2eqtcVcF0gn7aJ7RORWcuYW5N/f6S2v4phBL8=
 github.com/go-sql-driver/mysql v1.4.0/go.mod h1:zAC/RDZ24gD3HViQzih4MyKcchzm+sOG5ZlKdlhCg5w=
 github.com/jmoiron/sqlx v1.2.0 h1:41Ip0zITnmWNR/vHV+S4m+VoUivnWY5E4OJfLZjCJMA=
 github.com/jmoiron/sqlx v1.2.0/go.mod h1:1FEQNm3xlJgrMD+FBdI9+xvCksHtbpVBBw5dYhBSsks=

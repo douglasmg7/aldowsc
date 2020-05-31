@@ -265,23 +265,27 @@ func (doc *xmlDoc) process() (err error) {
 }
 
 // Update zunkasite product price and availability.
-func updateZunkasiteProduct(product *aldoutil.Product) {
+func updateZunkasiteProduct(product *aldoutil.Product) error {
 	// Product not created at zunkasite.
 	if product.MongodbId == "" {
-		return
+		return nil
 	}
+	// log.Printf("product.DealerPrice.ToString(): %s", product.DealerPrice.ToString())
 
 	// JSON data.
 	data := struct {
 		ID     string `json:"storeProductId"`
 		Active bool   `json:"dealerProductActive"`
+		Price  string `json:"dealerProductPrice"`
 	}{
 		product.MongodbId,
 		product.Availability,
+		product.DealerPrice.ToString(),
 	}
 	reqBody, err := json.Marshal(data)
+	// log.Printf("reqBody: %s", reqBody)
 	if checkError(err) {
-		return
+		return err
 	}
 
 	// Request product update.
@@ -289,26 +293,29 @@ func updateZunkasiteProduct(product *aldoutil.Product) {
 	req, err := http.NewRequest("POST", zunkaSiteHost()+"/setup/product/update", bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
 	if checkError(err) {
-		return
+		return err
 	}
 	req.SetBasicAuth(zunkaSiteUser(), zunkaSitePass())
 	res, err := client.Do(req)
 	if checkError(err) {
-		return
+		return err
 	}
 	// res, err := http.Post("http://localhost:3080/setup/product/add", "application/json", bytes.NewBuffer(reqBody))
 	defer res.Body.Close()
 	if checkError(err) {
-		return
+		return err
 	}
 
 	// Result.
 	resBody, err := ioutil.ReadAll(res.Body)
 	if checkError(err) {
-		return
+		return err
 	}
 	// No 200 status.
 	if res.StatusCode != 200 {
-		checkError(errors.New(fmt.Sprintf("Error ao solicitar a criação do produto no servidor zunka.\n\nstatus: %v\n\nbody: %v", res.StatusCode, string(resBody))))
+		err = errors.New(fmt.Sprintf("Error ao solicitar a criação do produto no servidor zunka.\n\nstatus: %v\n\nbody: %v", res.StatusCode, string(resBody)))
+		checkError(err)
+		return err
 	}
+	return nil
 }

@@ -40,3 +40,16 @@ func Test_CreateStmUpdateProductByCode(t *testing.T) {
 		t.Errorf("Received a empty string, want some string")
 	}
 }
+
+// Create satment insert product.
+func Test_UpdateZunkasiteProduct(t *testing.T) {
+	product := aldoutil.Product{
+		MongodbId:    "5ec52855711e8f07336c6697",
+		Availability: true,
+		DealerPrice:  123456,
+	}
+	err := updateZunkasiteProduct(&product)
+	if err != nil {
+		t.Errorf("Failed. %s", err)
+	}
+}
