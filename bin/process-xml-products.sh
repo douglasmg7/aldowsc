@@ -10,10 +10,9 @@ cd ..
 # Last downloaded XML file.
 FILE=$ZUNKAPATH/xml/aldo/aldo-products-substitution.xml
 
-if [[ $1 == dev ]]; then
-    go build
-    ./aldowsc dev < $FILE
-    # go run *.go dev < $FILE
+if [[ $RUN_MODE == production ]]; then
+    RUN_MODE=production aldowsc < $FILE
 else
-    aldowsc < $FILE
+    go build
+    ./aldowsc < $FILE
 fi

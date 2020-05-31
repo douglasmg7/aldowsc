@@ -47,4 +47,9 @@ sed -f $F_SUB $F_LAST > $F_LAST_SUB
 
 # Process xml file.
 echo Processing XML file...
-aldowsc < $F_LAST_SUB
+if [[ $RUN_MODE == production ]]; then
+    RUN_MODE=production aldowsc < $F_LAST_SUB
+else
+    go build
+    ./aldowsc < $F_LAST_SUB
+fi

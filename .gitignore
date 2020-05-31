@@ -1,2 +1,4 @@
 aldowsc
 vendor/
+.gitsecret/keys/random_seed
+s.go

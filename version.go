@@ -1,8 +1,11 @@
 package main
 
 const (
-	version string = "1.1.0"
-	// Using new db version without fields "new", "removed" and "changed".
+	version string = "1.2.0"
+	// Update price and availability for products created at zunkasite.
+
+	// version string = "1.1.0"
+	// // Using new db version without fields "new", "removed" and "changed".
 
 	// version string = "1.0.1"
 	// // Bugfix - When product changed mondodbId was not copied from old product.

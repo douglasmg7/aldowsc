@@ -36,7 +36,7 @@ var logFile, dbAldoFile string
 var maxPriceFilter, minPriceFilter currency.Currency
 
 // Development mode.
-var dev bool
+var production bool
 
 // Categories selected to use, key is the name for category.
 var selectedCategories map[string]aldoutil.Category
@@ -48,6 +48,11 @@ var stmProductInsert, stmProductSelectByCode, stmProductUpdateByCode, stmProduct
 var stmProductHistoryInsert string
 
 func init() {
+	// Check if production mode.
+	if os.Getenv("RUN_MODE") == "production" {
+		production = true
+	}
+
 	// Path.
 	zunkaPath := os.Getenv("ZUNKAPATH")
 	if zunkaPath == "" {
@@ -102,15 +107,12 @@ func init() {
 	// Statements product history.
 	stmProductHistoryInsert = createStmInsert(&aldoutil.Product{}, "product_history")
 
-	// Run mode.
-	mode := "production"
-	if len(os.Args) > 1 && strings.HasPrefix(os.Args[1], "dev") {
-		dev = true
-		mode = "development"
-	}
 	// Log start.
-	log.Printf("*** Starting aldowsc in %v mode (version %s) ***\n", mode, version)
-	// log.Printf("*** Starting aldowsc in %v mode (version %s) ***\n", mode, "1")
+	runMode := "development"
+	if production {
+		runMode = "production"
+	}
+	log.Printf("Running in %v mode (version %s)\n", runMode, version)
 }
 
 func main() {

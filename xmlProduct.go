@@ -1,9 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"math"
+	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
@@ -112,6 +118,7 @@ func (doc *xmlDoc) process() (err error) {
 		if strings.ToLower(strings.TrimSpace(xmlProduct.Availability)) == "sim" {
 			product.Availability = true
 		}
+
 		// Weight, remove ".", change "," to "." and parse.
 		weightKg, err := strconv.ParseFloat(strings.Replace(strings.ReplaceAll(xmlProduct.Weight, ".", ""), ",", ".", 1), 64)
 		if err != nil {
@@ -243,6 +250,7 @@ func (doc *xmlDoc) process() (err error) {
 			err = tx.Commit()
 			checkFatalError(err)
 
+			go updateZunkasiteProduct(&product)
 			log.Println("Product changed", product.Code)
 		}
 	}
@@ -254,4 +262,53 @@ func (doc *xmlDoc) process() (err error) {
 	log.Printf("Using %d categories from %d", len(mCategoryUse), len(mCategoryAll))
 	updateDBCategories(&mCategoryAll)
 	return err
+}
+
+// Update zunkasite product price and availability.
+func updateZunkasiteProduct(product *aldoutil.Product) {
+	// Product not created at zunkasite.
+	if product.MongodbId == "" {
+		return
+	}
+
+	// JSON data.
+	data := struct {
+		ID     string `json:"storeProductId"`
+		Active bool   `json:"dealerProductActive"`
+	}{
+		product.MongodbId,
+		product.Availability,
+	}
+	reqBody, err := json.Marshal(data)
+	if checkError(err) {
+		return
+	}
+
+	// Request product update.
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", zunkaSiteHost()+"/setup/product/update", bytes.NewBuffer(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	if checkError(err) {
+		return
+	}
+	req.SetBasicAuth(zunkaSiteUser(), zunkaSitePass())
+	res, err := client.Do(req)
+	if checkError(err) {
+		return
+	}
+	// res, err := http.Post("http://localhost:3080/setup/product/add", "application/json", bytes.NewBuffer(reqBody))
+	defer res.Body.Close()
+	if checkError(err) {
+		return
+	}
+
+	// Result.
+	resBody, err := ioutil.ReadAll(res.Body)
+	if checkError(err) {
+		return
+	}
+	// No 200 status.
+	if res.StatusCode != 200 {
+		checkError(errors.New(fmt.Sprintf("Error ao solicitar a criação do produto no servidor zunka.\n\nstatus: %v\n\nbody: %v", res.StatusCode, string(resBody))))
+	}
 }
