@@ -42,7 +42,7 @@ var production bool
 var selectedCategories map[string]aldoutil.Category
 
 // SQL statemets for product table.
-var stmProductInsert, stmProductSelectByCode, stmProductUpdateByCode, stmProductDeleteByCode string
+var stmProductSelectAll, stmProductSelectByCode, stmProductInsert, stmProductUpdateByCode, stmProductUpdateMongodbIdByCode, stmProductDeleteByCode string
 
 // SQL statemets for product_history table.
 var stmProductHistoryInsert string
@@ -99,9 +99,11 @@ func init() {
 	// log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 
 	// Statments product.
-	stmProductInsert = createStmInsert(&aldoutil.Product{}, "")
+	stmProductSelectAll = "SELECT * FROM product"
 	stmProductSelectByCode = "SELECT * FROM product WHERE code=?"
+	stmProductInsert = createStmInsert(&aldoutil.Product{}, "")
 	stmProductUpdateByCode = createStmUpdateByCode(&aldoutil.Product{}, "")
+	stmProductUpdateMongodbIdByCode = "UPDATE product SET mongodb_id=? WHERE code=?"
 	stmProductDeleteByCode = "DELETE FROM product WHERE code=?"
 
 	// Statements product history.
@@ -115,11 +117,24 @@ func init() {
 	log.Printf("Running in %v mode (version %s)\n", runMode, version)
 }
 
+func initSql3DB() {
+	db = sqlx.MustConnect("sqlite3", dbAldoFile)
+	// log.Printf("Connected to Sqlite3")
+}
+
+func closeSql3DB() {
+	// log.Printf("Closing Sqlite3 connection...")
+	db.Close()
+}
+
 func main() {
 	var err error
 
-	// Init db Aldo.
-	db = sqlx.MustConnect("sqlite3", dbAldoFile)
+	// Sqlite3 db.
+	initSql3DB()
+	defer closeSql3DB()
+
+	// db = sqlx.MustConnect("sqlite3", dbAldoFile)
 
 	// Getting selected categories.
 	log.Println("Reading selected categories from db...")
@@ -342,6 +357,17 @@ func checkError(err error) bool {
 		// the error happened, 0 = this function, we don't want that.
 		function, file, line, _ := runtime.Caller(1)
 		log.Printf("[error] [%s] [%s:%d] %v", filepath.Base(file), runtime.FuncForPC(function).Name(), line, err)
+		return true
+	}
+	return false
+}
+
+func checkSQLError(err error, stm string) bool {
+	if err != nil && err != sql.ErrNoRows {
+		// notice that we're using 1, so it will actually log where
+		// the error happened, 0 = this function, we don't want that.
+		function, file, line, _ := runtime.Caller(1)
+		log.Printf("[error] [%s] [%s:%d] %v\n%s", filepath.Base(file), runtime.FuncForPC(function).Name(), line, err, stm)
 		return true
 	}
 	return false

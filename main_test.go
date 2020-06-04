@@ -17,9 +17,11 @@ func TestMain(m *testing.M) {
 }
 
 func setupTest() {
+	initSql3DB()
 }
 
 func shutdownTest() {
+	closeSql3DB()
 }
 
 // Create satment insert product.
@@ -40,7 +42,7 @@ func Test_CreateStmUpdateProductByCode(t *testing.T) {
 	}
 }
 
-// Create satment insert product.
+// Update zunkasite product.
 func Test_UpdateZunkasiteProduct(t *testing.T) {
 	product := aldoutil.Product{
 		MongodbId:    "5ec52855711e8f07336c6697",
@@ -55,7 +57,7 @@ func Test_UpdateZunkasiteProduct(t *testing.T) {
 
 // Get zunkasite aldo products.
 func Test_GetAllAldoZunkasiteProduct(t *testing.T) {
-	err, zunkaProducts := getAllAldoZunkasiteProducts()
+	zunkaProducts, err := getAllAldoZunkasiteProducts()
 	if err != nil {
 		t.Errorf("Failed. %s", err)
 	}
@@ -76,4 +78,30 @@ func Test_GetAllAldoZunkasiteProduct(t *testing.T) {
 	if zunkaProducts[0].DealerProductPrice < 100 {
 		t.Errorf("Invalid price: %v", zunkaProducts[0].DealerProductPrice)
 	}
+}
+
+// Get zunkasite aldo products.
+func Test_GetAllDbProducts(t *testing.T) {
+	// Get all products.
+	products, err := getAllDbProducts()
+	if err != nil {
+		t.Errorf("Failed. %s", err)
+	}
+	// Some product.
+	if len(products) == 0 {
+		t.Errorf("Received db products len = 0")
+	}
+	// Code.
+	if products[0].Code == "" {
+		t.Errorf("Invalid code: %v", products[0].Code)
+	}
+	// Price.
+	if products[0].DealerPrice < 100 {
+		t.Errorf("Invalid price: %v", products[0].DealerPrice)
+	}
+}
+
+// Check consistency.
+func Test_CheckConsistency(t *testing.T) {
+	checkConsistency()
 }

@@ -1,8 +1,12 @@
 package main
 
 const (
-	version string = "1.2.0"
-	// Update price and availability for products created at zunkasite.
+	version string = "1.2.1"
+	// 04/06/2020
+	// Check consistency for products aldo and zunkasite products.
+
+	// version string = "1.2.0"
+	// // Update price and availability for products created at zunkasite.
 
 	// version string = "1.1.0"
 	// // Using new db version without fields "new", "removed" and "changed".
