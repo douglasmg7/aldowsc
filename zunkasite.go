@@ -22,6 +22,7 @@ type zunkaSiteProduct struct {
 
 // Check consistency between aldo db and zunka db.
 func checkConsistency() {
+	log.Printf("Checking consistency...")
 	// Get zunka products.
 	zunkaProducts, err := getAllAldoZunkasiteProducts()
 	if err != nil {
@@ -81,6 +82,7 @@ func checkConsistency() {
 			}
 		}
 	}
+	log.Printf("Check consistency finished")
 }
 
 // Get all db products.

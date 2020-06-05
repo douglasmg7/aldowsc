@@ -189,6 +189,9 @@ func main() {
 	log.Printf("Time processing products: %fs", time.Since(timer).Seconds())
 	checkFatalError(err)
 
+	// Check consistency between zunkasite and aldo products.
+	checkConsistency()
+
 	log.Printf("Finish\n\n")
 }
 
