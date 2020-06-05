@@ -62,6 +62,14 @@ func checkConsistency() {
 			continue
 		}
 		if zunkaProduct.DealerProductPrice != dbProduct.DealerPrice.ToFloat64() || zunkaProduct.DealerProductActive != dbProduct.Availability {
+			// Update db product with mongodbId, because zunkasite pointing to aldo product.
+			if dbProduct.MongodbId == "" {
+				_, err = db.Exec(stmProductUpdateMongodbIdByCode, zunkaProduct.MongodbId, dbProduct.Code)
+				if !checkSQLError(err, stmProductUpdateMongodbIdByCode) {
+					dbProduct.MongodbId = zunkaProduct.MongodbId
+					log.Printf("[debug] Product Aldo updated. MongodbId was included. Code: %v, MongodbId: %v", dbProduct.Code, dbProduct.MongodbId)
+				}
+			}
 			log.Printf("[warn] aldo product different from zunkasite product. zunka product _id: %s, code: %s, zunka price: %v, db price: %v, zunka active: %v, db Availability: %v", zunkaProduct.MongodbId, zunkaProduct.Code, zunkaProduct.DealerProductPrice, dbProduct.DealerPrice.ToFloat64(), zunkaProduct.DealerProductActive, dbProduct.Availability)
 			updateZunkasiteProduct(&dbProduct)
 		}
@@ -76,7 +84,7 @@ func checkConsistency() {
 				log.Printf("[warn] zunkasite product not exist for aldo product. Aldo product code: %s, zunka product _id: %s", dbProduct.Code, dbProduct.MongodbId)
 				dbProduct.MongodbId = ""
 				_, err = db.Exec(stmProductUpdateMongodbIdByCode, "", dbProduct.Code)
-				if !checkSQLError(err, stmProductUpdateByCode) {
+				if !checkSQLError(err, stmProductUpdateMongodbIdByCode) {
 					log.Printf("[debug] Product Aldo updated. MongodbId was removed. Product code: %v", dbProduct.Code)
 				}
 			}
@@ -145,7 +153,7 @@ func updateZunkasiteProduct(product *aldoutil.Product) error {
 	}
 	// No 200 status.
 	if res.StatusCode != 200 {
-		err = errors.New(fmt.Sprintf("Error ao solicitar a criação do produto no servidor zunka.\n\nstatus: %v\n\nbody: %v", res.StatusCode, string(resBody)))
+		err = errors.New(fmt.Sprintf("Error updating product on zunkaite.\n\nstatus: %v\n\nbody: %v", res.StatusCode, string(resBody)))
 		checkError(err)
 		return err
 	}

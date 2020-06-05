@@ -1,9 +1,13 @@
 package main
 
 const (
-	version string = "1.2.2"
+	version string = "1.2.3"
 	// 05/06/2020
-	// Bug fix - Not calling check consistency routine.
+	// Update aldo product with mongodbId if zunka product alredy pointing to aldo product.
+
+	// version string = "1.2.2"
+	// // 05/06/2020
+	// // Bug fix - Not calling check consistency routine.
 
 	// version string = "1.2.1"
 	// // 04/06/2020
