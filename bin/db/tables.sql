@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS product_history (
 	category                TEXT NOT NULL,
 	description             TEXT NOT NULL,
 	dealer_price            INTEGER NOT NULL,
-	suggestion_price        REAL NOT NULL,
+	suggestion_price        INTEGER NOT NULL,
 	technical_description   TEXT NOT NULL,
 	availability            BOOLEAN NOT NULL,
 	length                  INTEGER NOT NULL, -- mm.
