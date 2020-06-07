@@ -57,8 +57,13 @@ func checkConsistency() {
 			continue
 		}
 		dbProduct, ok := mapDbProducts[zunkaProduct.Code]
+		// Aldo product not exist for zunkasite product.
 		if !ok {
-			log.Printf("[warn] aldo product not exist for zunkasite product. zunka product _id: %s, code: %s", zunkaProduct.MongodbId, zunkaProduct.Code)
+			// Disable product, if active.
+			if zunkaProduct.DealerProductActive {
+				log.Printf("[warn] aldo product not exist for zunkasite product. zunka product _id: %s, code: %s", zunkaProduct.MongodbId, zunkaProduct.Code)
+				disableZunkasiteProduct(zunkaProduct.MongodbId)
+			}
 			continue
 		}
 		if zunkaProduct.DealerProductPrice != dbProduct.DealerPrice.ToFloat64() || zunkaProduct.DealerProductActive != dbProduct.Availability {
@@ -157,7 +162,60 @@ func updateZunkasiteProduct(product *aldoutil.Product) error {
 		checkError(err)
 		return err
 	}
-	log.Printf("Product updated. id: %s, active: %v, price: %v", data.ID, data.Active, data.Price)
+	log.Printf("Product updated, id: %s, active: %v, price: %v", data.ID, data.Active, data.Price)
+	return nil
+}
+
+// Disable zunkasite product.
+func disableZunkasiteProduct(productId string) error {
+	// Product not created at zunkasite.
+	if productId == "" {
+		return nil
+	}
+	// log.Printf("product.DealerPrice.ToString(): %s", product.DealerPrice.ToString())
+
+	// JSON data.
+	data := struct {
+		ID string `json:"storeProductId"`
+	}{
+		productId,
+	}
+	reqBody, err := json.Marshal(data)
+	// log.Printf("reqBody: %s", reqBody)
+	if checkError(err) {
+		return err
+	}
+
+	// Request product update.
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", zunkaSiteHost()+"/setup/product/disable", bytes.NewBuffer(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	if checkError(err) {
+		return err
+	}
+	req.SetBasicAuth(zunkaSiteUser(), zunkaSitePass())
+	res, err := client.Do(req)
+	if checkError(err) {
+		return err
+	}
+	// res, err := http.Post("http://localhost:3080/setup/product/add", "application/json", bytes.NewBuffer(reqBody))
+	defer res.Body.Close()
+	if checkError(err) {
+		return err
+	}
+
+	// Result.
+	resBody, err := ioutil.ReadAll(res.Body)
+	if checkError(err) {
+		return err
+	}
+	// No 200 status.
+	if res.StatusCode != 200 {
+		err = errors.New(fmt.Sprintf("Error disabling product on zunkaite.\n\nstatus: %v\n\nbody: %v", res.StatusCode, string(resBody)))
+		checkError(err)
+		return err
+	}
+	log.Printf("Product disabled, id: %s", data.ID)
 	return nil
 }
 

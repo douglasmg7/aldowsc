@@ -1,9 +1,13 @@
 package main
 
 const (
-	version string = "1.2.3"
-	// 05/06/2020
-	// Update aldo product with mongodbId if zunka product alredy pointing to aldo product.
+	version string = "1.2.4"
+	// 07/06/2020
+	// Disable zunkasite aldo product without aldo product.
+
+	// version string = "1.2.3"
+	// // 05/06/2020
+	// // Update aldo product with mongodbId if zunka product alredy pointing to aldo product.
 
 	// version string = "1.2.2"
 	// // 05/06/2020

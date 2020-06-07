@@ -43,6 +43,14 @@ func Test_CreateStmUpdateProductByCode(t *testing.T) {
 }
 
 // Update zunkasite product.
+func Test_DisableZunkasiteProduct(t *testing.T) {
+	err := disableZunkasiteProduct("5ec52855711e8f07336c6697")
+	if err != nil {
+		t.Errorf("Failed. %s", err)
+	}
+}
+
+// Update zunkasite product.
 func Test_UpdateZunkasiteProduct(t *testing.T) {
 	product := aldoutil.Product{
 		MongodbId:    "5ec52855711e8f07336c6697",
