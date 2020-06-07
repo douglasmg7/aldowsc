@@ -36,16 +36,16 @@ Description=aldowsc timer
 
 [Timer]
 # OnCalendar=*-*-* 00:00:01
-OnCalendar=*-*-* 01:00:00
-# OnCalendar=*-*-* 02:00:00
+# OnCalendar=*-*-* 01:00:00
+OnCalendar=*-*-* 02:00:00
 # OnCalendar=*-*-* 03:00:00
 # OnCalendar=*-*-* 04:00:00
 # OnCalendar=*-*-* 05:00:00
-# OnCalendar=*-*-* 06:00:00
+OnCalendar=*-*-* 06:00:00
 # OnCalendar=*-*-* 07:00:00
 # OnCalendar=*-*-* 08:00:00
 # OnCalendar=*-*-* 09:00:00
-# OnCalendar=*-*-* 10:00:00
+OnCalendar=*-*-* 10:00:00
 # OnCalendar=*-*-* 11:00:00
 # OnCalendar=*-*-* 12:00:00
 # OnCalendar=*-*-* 13:00:00
