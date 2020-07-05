@@ -1,9 +1,13 @@
 package main
 
 const (
-	version string = "1.2.4"
-	// 07/06/2020
-	// Disable zunkasite aldo product without aldo product.
+	version string = "1.3.0"
+	// 05/07/2020
+	// Update product stock quantity.
+
+	// version string = "1.2.4"
+	// // 07/06/2020
+	// // Disable zunkasite aldo product without aldo product.
 
 	// version string = "1.2.3"
 	// // 05/06/2020

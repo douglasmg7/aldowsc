@@ -14,10 +14,12 @@ import (
 
 // Zunka site product.
 type zunkaSiteProduct struct {
-	MongodbId           string  `json:"id"`
-	Code                string  `json:"dealerProductId"`
-	DealerProductActive bool    `json:"dealerProductActive"`
-	DealerProductPrice  float64 `json:"dealerProductPrice"`
+	MongodbId             string  `json:"id"`
+	Code                  string  `json:"dealerProductId"`
+	DealerProductActive   bool    `json:"dealerProductActive"`
+	DealerProductPrice    float64 `json:"dealerProductPrice"`
+	StoreProductQtd       int     `json:"storeProductQtd"`
+	SuccessfullyProcessed bool
 }
 
 // Check consistency between aldo db and zunka db.

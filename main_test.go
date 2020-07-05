@@ -86,6 +86,10 @@ func Test_GetAllAldoZunkasiteProduct(t *testing.T) {
 	if zunkaProducts[0].DealerProductPrice < 100 {
 		t.Errorf("Invalid price: %v", zunkaProducts[0].DealerProductPrice)
 	}
+	// Quantity.
+	if zunkaProducts[0].StoreProductQtd < 0 {
+		t.Errorf("Invalid quantity: %v", zunkaProducts[0].StoreProductQtd)
+	}
 }
 
 // Get zunkasite aldo products.
@@ -112,4 +116,20 @@ func Test_GetAllDbProducts(t *testing.T) {
 // Check consistency.
 func Test_CheckConsistency(t *testing.T) {
 	checkConsistency()
+}
+
+/***********************************************************
+*	Aldo
+***********************************************************/
+// Aldo product quantity.
+func Test_AldoProductQuantity(t *testing.T) {
+	_, ok := checkAldoProductQuantity("69697-6", 1)
+	if !ok {
+		t.Errorf("Failed")
+	}
+}
+
+// Aldo product quantity.
+func Test_updateAllZunkaAldoProductsStock(t *testing.T) {
+	updateAllZunkaAldoProductsStock()
 }
