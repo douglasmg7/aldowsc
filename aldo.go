@@ -58,12 +58,12 @@ func updateAllZunkaAldoProductsStock() {
 		wg.Wait()
 
 		// Exit if fineshed.
-		if countProductsToProcess == 0 {
+		if countProductsToProcess == 0 || countTry > 100 {
 			goto Exit
 		}
 	}
 Exit:
-	log.Printf("Updating zunka aldo product finished")
+	log.Printf("Updating zunka aldo product finished\n\n")
 }
 
 // Update zunka aldo product stock.

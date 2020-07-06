@@ -38,6 +38,9 @@ var maxPriceFilter, minPriceFilter currency.Currency
 // Development mode.
 var production bool
 
+// Only update stock quantity.
+var updateStockQuantity bool
+
 // Categories selected to use, key is the name for category.
 var selectedCategories map[string]aldoutil.Category
 
@@ -115,6 +118,11 @@ func init() {
 		runMode = "production"
 	}
 	log.Printf("Running in %v mode (version %s)\n", runMode, version)
+
+	// Update stock quantity only.
+	if len(os.Args) > 1 && os.Args[1] == "--update-stock-quantity" {
+		updateStockQuantity = true
+	}
 }
 
 func initSql3DB() {
@@ -129,6 +137,12 @@ func closeSql3DB() {
 
 func main() {
 	var err error
+
+	// Only update stock quantity.
+	if updateStockQuantity {
+		updateAllZunkaAldoProductsStock()
+		return
+	}
 
 	// Sqlite3 db.
 	initSql3DB()
