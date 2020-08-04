@@ -18,7 +18,8 @@ type xmlProduct struct {
 	Brand       string `xml:"marca,attr"`
 	Category    string `xml:"categoria,attr"`
 	Description string `xml:"descricao,attr"`
-	DealerPrice string `xml:"preco,attr"`
+	DealerPrice string `xml:"precocomst,attr"`
+	// DealerPrice string `xml:"preco,attr"`
 	// Suggestion price to sell.
 	SuggestionPrice      string `xml:"precoeup,attr"`
 	Weight               string `xml:"peso,attr"`
